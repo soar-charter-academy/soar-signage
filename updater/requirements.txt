@@ -1,0 +1,9 @@
+# Updater dependencies. Install with:
+#   pip install --break-system-packages -r requirements.txt
+# (or inside a venv without the flag)
+
+python-docx>=1.1.0     # read the bulletin .docx (paragraphs + tables)
+anthropic>=0.40.0      # structure the bulletin's free-text events
+gspread>=6.0.0         # read the yard-duty Google Sheet
+google-auth>=2.30.0    # service-account auth for gspread
+python-dotenv>=1.0.0   # load secrets from .env instead of code/shell

@@ -1,0 +1,221 @@
+/* =========================================================================
+   themes.css — the SKINS.
+   =========================================================================
+
+   Each theme is one block: [data-theme="key"] { ...variable overrides... }.
+   The display sets the data-theme attribute on <html> based on today's date
+   (see themes.json). Nothing here touches layout — only the variables defined
+   in style.css :root. That's what keeps skins to "colors, fonts, and (later)
+   art" with zero structural risk.
+
+   These are starting palettes. Refine each as its season approaches — change a
+   value, reload, done. When you make seasonal artwork, drop it in
+   themes/<key>/assets/ and wire it here via:
+       --bg-image: url("<key>/assets/backdrop.png");
+       --deco-tr:  url("<key>/assets/corner.png");
+
+   "default" is intentionally NOT here — it's the :root palette in style.css.
+   ========================================================================= */
+
+
+/* ---- TESTING ---------------------------------------------------------------
+   CAASPP / ELPAC season. Deliberately the calmest skin in the set: low chroma,
+   soft contrast, no ambient motion. The board should whisper, not shout. ---- */
+[data-theme="testing"] {
+  --bg:        #11151b;
+  --bg-2:      #181f29;
+  --surface:   #1a212c;
+  --surface-2: #222b38;
+  --border:    #2c3744;
+  --text:      #e7ecf2;
+  --text-dim:  #8c98a6;
+  --accent:    #6f8fa6;   /* muted slate-blue */
+  --accent-2:  #7fae9e;   /* muted sage */
+  --today:     #c9b98a;   /* soft brass, not a bright yellow */
+  --header-bg: #0c1015;
+  --font-display: "Hanken Grotesk", system-ui, sans-serif;
+  --display-tracking: 0.01em;
+}
+
+/* ---- END OF YEAR -----------------------------------------------------------
+   For now this inherits the SOAR default palette (navy/red/white/gold) and just
+   adds the confetti effect (set in themes.json) + the "End of the Year!" label.
+   So today's live board shows the SOAR look with a festive confetti layer.
+   Refine with EOY-specific colors later if you want it more distinct. ---- */
+[data-theme="end-of-year"] {
+  /* inherits :root (SOAR) — no color overrides */
+}
+
+/* ---- SUMMER SCHOOL ---------------------------------------------------------
+   Bright but composed — it's still school. Aqua + warm sun accent. ---- */
+[data-theme="summer-school"] {
+  --bg:        #07212b;
+  --bg-2:      #0c3340;
+  --surface:   #0e2e3a;
+  --surface-2: #134150;
+  --border:    #1d5666;
+  --text:      #f0fbff;
+  --text-dim:  #8fc3d1;
+  --accent:    #2fd4c4;   /* teal */
+  --accent-2:  #ffcf4d;   /* sun */
+  --today:     #ffd84d;
+  --header-bg: #05181f;
+  --font-display: "Nunito", system-ui, sans-serif;
+  --display-tracking: -0.02em;
+}
+
+/* ---- SUMMER BREAK ----------------------------------------------------------
+   LIGHT skin. Sky + sand + coral, playful script display. Vacation mode. ---- */
+[data-theme="summer-break"] {
+  --bg:        #bfe9ff;
+  --bg-2:      #e8f7ff;
+  --surface:   #ffffff;
+  --surface-2: #eaf6ff;
+  --border:    #bcdcec;
+  --text:      #103645;
+  --text-dim:  #5c8295;
+  --accent:    #ff7a59;   /* coral */
+  --accent-2:  #1fb6d6;   /* sea */
+  --today:     #ffb01f;   /* sunshine */
+  --good:      #1fae6a;
+  --bad:       #e8543f;
+  --header-bg: #0e8bb0;   /* deep sea band so the white header text reads */
+  --shadow:    0 14px 34px rgba(28, 90, 120, 0.18);
+  --font-display: "Pacifico", cursive;
+  --display-tracking: 0;
+}
+
+/* ---- BACK TO SCHOOL --------------------------------------------------------
+   Fresh start: chalkboard green, apple red, crisp navy. ---- */
+[data-theme="back-to-school"] {
+  --bg:        #0f1c1a;
+  --bg-2:      #14302a;
+  --surface:   #14241f;
+  --surface-2: #1c322b;
+  --border:    #2c4a40;
+  --text:      #f2faf5;
+  --text-dim:  #94b6a8;
+  --accent:    #e2483d;   /* apple red */
+  --accent-2:  #f4c542;   /* pencil yellow */
+  --today:     #f4c542;
+  --header-bg: #0a1513;
+  --font-display: "Fraunces", Georgia, serif;
+  --display-tracking: -0.01em;
+}
+
+/* ---- FALL ------------------------------------------------------------------
+   Amber, rust, olive. Leaves drifting. Warm and low. ---- */
+[data-theme="fall"] {
+  --bg:        #1c1109;
+  --bg-2:      #2e1c0d;
+  --surface:   #271810;
+  --surface-2: #34221b;
+  --border:    #4d3422;
+  --text:      #fbf0e2;
+  --text-dim:  #c2a489;
+  --accent:    #e8852b;   /* pumpkin */
+  --accent-2:  #c4622a;   /* rust */
+  --today:     #f3b13a;
+  --header-bg: #150c06;
+  --font-display: "Fraunces", Georgia, serif;
+  --display-tracking: -0.01em;
+}
+
+/* ---- HALLOWEEN -------------------------------------------------------------
+   Black, ember orange, witchy purple. Spooky display face. ---- */
+[data-theme="halloween"] {
+  --bg:        #0a0710;
+  --bg-2:      #1a0d22;
+  --surface:   #150c1e;
+  --surface-2: #221234;
+  --border:    #4a2168;
+  --text:      #f7ecff;
+  --text-dim:  #b58fce;
+  --accent:    #ff7a18;   /* jack-o-lantern */
+  --accent-2:  #8a4dff;   /* spectral purple */
+  --today:     #b6ff3a;   /* slime green */
+  --good:      #9cff3a;
+  --bad:       #ff5470;
+  --header-bg: #06040a;
+  --font-display: "Creepster", cursive;
+  --display-tracking: 0.04em;
+  --cat-celebration: #ff7a18;
+  --cat-meeting:     #8a4dff;
+}
+
+/* ---- THANKSGIVING ----------------------------------------------------------
+   Harvest: deep browns, gold, cranberry. Cozy serif. ---- */
+[data-theme="thanksgiving"] {
+  --bg:        #1b120b;
+  --bg-2:      #2a1a10;
+  --surface:   #261810;
+  --surface-2: #34241a;
+  --border:    #503826;
+  --text:      #fbf1e3;
+  --text-dim:  #c6a888;
+  --accent:    #d98324;   /* amber */
+  --accent-2:  #9e3b2f;   /* cranberry */
+  --today:     #e9b44c;   /* wheat gold */
+  --header-bg: #140d07;
+  --font-display: "Fraunces", Georgia, serif;
+  --display-tracking: 0;
+}
+
+/* ---- CHRISTMAS / HOLIDAYS --------------------------------------------------
+   Evergreen, red, gold. Snow on. Festive display face. ---- */
+[data-theme="christmas"] {
+  --bg:        #07160f;
+  --bg-2:      #0c2418;
+  --surface:   #0b2014;
+  --surface-2: #11331f;
+  --border:    #1e5234;
+  --text:      #f3fbf4;
+  --text-dim:  #9cc3a7;
+  --accent:    #e23b43;   /* holly red */
+  --accent-2:  #e8c361;   /* gold */
+  --today:     #e8c361;
+  --good:      #5fd07f;
+  --header-bg: #05110b;
+  --font-display: "Mountains of Christmas", "Fraunces", serif;
+  --display-tracking: 0;
+  --cat-celebration: #e23b43;
+}
+
+/* ---- WINTER ----------------------------------------------------------------
+   Post-holiday: icy blues, silver, white. Snow on. Cool and clean. ---- */
+[data-theme="winter"] {
+  --bg:        #0b1622;
+  --bg-2:      #12243a;
+  --surface:   #122033;
+  --surface-2: #1a2c45;
+  --border:    #294263;
+  --text:      #eef6ff;
+  --text-dim:  #98b3d2;
+  --accent:    #69b7ff;   /* glacier */
+  --accent-2:  #b9d9f2;   /* frost */
+  --today:     #aee3ff;
+  --header-bg: #07101a;
+  --font-display: "Fraunces", Georgia, serif;
+  --display-tracking: -0.01em;
+}
+
+/* ---- SPRING ----------------------------------------------------------------
+   LIGHT skin. Fresh green, blossom pink, daffodil. Soft and bright. ---- */
+[data-theme="spring"] {
+  --bg:        #e8f6e3;
+  --bg-2:      #f5fbef;
+  --surface:   #ffffff;
+  --surface-2: #eef8e9;
+  --border:    #cfe6c6;
+  --text:      #1f3a22;
+  --text-dim:  #5f7d5e;
+  --accent:    #f06fa0;   /* blossom */
+  --accent-2:  #5fb85a;   /* leaf */
+  --today:     #f3c33b;   /* daffodil */
+  --good:      #3fa54a;
+  --bad:       #e0574f;
+  --header-bg: #4ba357;   /* leaf-green band so the white header text reads */
+  --shadow:    0 14px 34px rgba(60, 110, 60, 0.16);
+  --font-display: "Nunito", system-ui, sans-serif;
+  --display-tracking: -0.02em;
+}

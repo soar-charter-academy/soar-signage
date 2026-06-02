@@ -1,0 +1,15 @@
+# Secrets — never commit
+updater/.env
+*.service-account.json
+service-account*.json
+
+# Python
+__pycache__/
+*.pyc
+
+# Updater backups + temp writes
+display/data/signage.*.bak.json
+display/data/*.tmp
+
+# OS cruft
+.DS_Store

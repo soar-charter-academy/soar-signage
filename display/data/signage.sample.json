@@ -1,0 +1,54 @@
+{
+  "generated_at": "2026-06-02T08:30:00",
+  "week_of": "2026-06-01",
+  "theme_override": null,
+  "events": [
+    { "title": "EL Celebration", "date": "2026-06-01", "day": "Monday", "start": "14:00", "end": null, "location": null, "category": "celebration", "audience": null },
+    { "title": "Last Staff Meeting", "date": "2026-06-02", "day": "Tuesday", "start": "15:15", "end": null, "location": "B1", "category": "meeting", "audience": "All staff" },
+    { "title": "WOW Celebration TK–4", "date": "2026-06-03", "day": "Wednesday", "start": "08:30", "end": null, "location": "MU Room", "category": "celebration", "audience": "TK-4th" },
+    { "title": "WOW Celebration 5–8", "date": "2026-06-03", "day": "Wednesday", "start": "09:30", "end": null, "location": "MU Room", "category": "celebration", "audience": "5th-8th" },
+    { "title": "Parent Potato Luncheon", "date": "2026-06-03", "day": "Wednesday", "start": "11:00", "end": "12:30", "location": "Staff Room", "category": "food", "audience": null },
+    { "title": "Classified Staff Meeting", "date": "2026-06-03", "day": "Wednesday", "start": "14:00", "end": null, "location": "B5", "category": "meeting", "audience": "Classified staff" },
+    { "title": "Food Truck Celebration", "date": "2026-06-04", "day": "Thursday", "start": null, "end": null, "location": "All lunches", "category": "food", "audience": null },
+    { "title": "SSC Meeting", "date": "2026-06-05", "day": "Friday", "start": "08:30", "end": null, "location": "Staff Room", "category": "meeting", "audience": null },
+    { "title": "Christina's Send-Off", "date": "2026-06-05", "day": "Friday", "start": "16:00", "end": "20:00", "location": "Escape Brewery, Redlands", "category": "celebration", "audience": null },
+    { "title": "Tournament of Houses", "date": "2026-06-08", "day": "Monday", "start": null, "end": null, "location": null, "category": "celebration", "audience": null },
+    { "title": "Magic Mtn / Knott's Trips", "date": "2026-06-09", "day": "Tuesday", "start": null, "end": null, "location": null, "category": "trip", "audience": null },
+    { "title": "TK Superhero Celebration", "date": "2026-06-09", "day": "Tuesday", "start": "09:00", "end": null, "location": "MU Room", "category": "celebration", "audience": "TK" },
+    { "title": "SOAR Board Meeting", "date": "2026-06-09", "day": "Tuesday", "start": "17:00", "end": null, "location": "Staff Room", "category": "meeting", "audience": null },
+    { "title": "TK–4 EOY Awards", "date": "2026-06-10", "day": "Wednesday", "start": "08:15", "end": null, "location": "Blacktop", "category": "celebration", "audience": "TK-4th" },
+    { "title": "8th Grade vs Staff Softball", "date": "2026-06-10", "day": "Wednesday", "start": "09:30", "end": null, "location": "Field", "category": "sports", "audience": null },
+    { "title": "5–8 EOY Awards", "date": "2026-06-11", "day": "Thursday", "start": "08:15", "end": null, "location": "Blacktop", "category": "celebration", "audience": "5th-8th" },
+    { "title": "8th Grade BBQ", "date": "2026-06-11", "day": "Thursday", "start": "11:00", "end": null, "location": "Quad", "category": "food", "audience": "8th" },
+    { "title": "8th Grade Promotion", "date": "2026-06-12", "day": "Friday", "start": "17:30", "end": null, "location": "Sturges Theater", "category": "celebration", "audience": "8th" },
+    { "title": "Kinder Promotion", "date": "2026-06-12", "day": "Friday", "start": null, "end": null, "location": "MU Room", "category": "celebration", "audience": "Kinder" }
+  ],
+  "yard_duty": {
+    "week_label": "Week of June 1st",
+    "assignments": [
+      { "post": "AM Green 1", "name": "Christian Mendoza", "time": "7:30–7:45a", "where": "Staff Lot", "part": "am" },
+      { "post": "AM Playground 1", "name": "Stacy Miller", "time": "7:30–7:45a", "where": "Playground", "part": "am" },
+      { "post": "AM Green 2", "name": "Jen Reitz", "time": "7:45–7:55a", "where": "Staff Lot", "part": "am" },
+      { "post": "AM Playground 2 A", "name": "Aaron Chochrek", "time": "7:45–7:55a", "where": "Playground", "part": "am" },
+      { "post": "AM Playground 2 B", "name": "Dawn Burley-Hill", "time": "7:45–7:55a", "where": "Playground", "part": "am" },
+      { "post": "Nutrition A", "name": "Evelyn Martinez", "time": "Nutrition", "where": "Quad", "part": "mid" },
+      { "post": "Nutrition B", "name": "Tammi Martinez", "time": "Nutrition", "where": "Quad", "part": "mid" },
+      { "post": "PM Primary", "name": "Angel Avalos", "time": "Recess", "where": "Playground", "part": "mid" },
+      { "post": "PM Upper", "name": "TJ Gonzales", "time": "Recess", "where": "Playground", "part": "mid" },
+      { "post": "PM Green 1 A", "name": "Art De Leon", "time": "3:00–3:10p", "where": "Staff Lot", "part": "pm" },
+      { "post": "PM Green 1 B", "name": "Joanna Cox", "time": "3:00–3:10p", "where": "Staff Lot", "part": "pm" },
+      { "post": "PM Green 2 A", "name": "Jason Hicks", "time": "3:10–3:20p", "where": "Staff Lot", "part": "pm" },
+      { "post": "PM Green 2 B", "name": "Stevie Adame", "time": "3:10–3:20p", "where": "Staff Lot", "part": "pm" }
+    ]
+  },
+  "announcements": [
+    { "text": "Math curriculum chosen: McGraw Hill Reveal — summer virtual trainings available.", "priority": "high" },
+    { "text": "Start counting ELA materials — Williams input sheet drops next week.", "priority": "normal" },
+    { "text": "EOY Checklist is available to download — stack at the June 2 staff meeting.", "priority": "normal" }
+  ],
+  "diagnostics": {
+    "sanitize": "sample data — no API call made",
+    "bulletin_warning": null,
+    "yard_duty_warning": null
+  }
+}

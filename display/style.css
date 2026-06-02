@@ -1,0 +1,407 @@
+/* =========================================================================
+   style.css — BASE layer: layout, structure, components.
+   =========================================================================
+
+   TARGET DISPLAY: 1920 × 1080 (16:9 TV/monitor), fullscreen browser.
+   All sizing uses clamp() so it degrades reasonably at smaller viewports
+   during development.
+
+   THE THEMING CONTRACT
+   Every color, font, and decorative image is a CSS variable. Themes override
+   variables only — they never edit layout rules. If you add a new visual
+   property, add its variable here first.
+
+   LAYOUT STRUCTURE (3 rows):
+     Row 1 — topbar:      auto height, ~65px
+     Row 2 — main grid:   1fr, takes all remaining vertical space
+     Row 3 — ticker:      auto height, ~52px
+   Inside main grid (2 cols, 60/40):
+     Left  — schedule:    now/next banner · "This Week" events · coming-up strip
+     Right — info panel:  House Cup iframe · On Duty · Scan to Log
+   ========================================================================= */
+
+:root {
+  /* ---- SOAR palette — deep navy field, gold + red pop, white text ----
+     The dark field makes the gold/red/white glow (like the original mockup).
+     Brand navy IS the field; the accent-blue is a brightened #0623c6 since the
+     true brand blue is too dark to read on navy. (themes/ overrides per season.) */
+  --bg:            #0a1a3a;   /* deep navy field */
+  --bg-2:          #123164;   /* lighter navy — corner glow */
+  --surface:       #122a58;   /* navy panels (raised above the field) */
+  --surface-2:     #1a3872;   /* rows inside panels */
+  --border:        #2f5293;   /* visible navy hairline */
+  --text:          #f1f5fc;   /* near-white */
+  --text-dim:      #9fb3d8;   /* muted light blue-grey */
+  --accent:        #4d6dff;   /* brightened SOAR blue — pops on navy */
+  --accent-2:      #7d97ff;   /* lighter blue — secondary */
+  --today:         #c8102e;   /* classic red — today / now / pop */
+  --accent-gold:   #f4b400;   /* eagle-beak gold — the hero accent on navy */
+  --good:          #34d17f;
+  --bad:           #ff6b6b;
+  --header-bg:     #06142f;   /* deep navy header + ticker bands */
+  --header-text:   #ffffff;   /* white on the navy bands */
+  --on-gold:       #0c2249;   /* dark navy text on gold fills (pills/tags) */
+
+  /* ---- Category dot colors (bright, to pop on the navy field) ---- */
+  --cat-celebration: #ff8bd0;
+  --cat-meeting:     #7aa2ff;
+  --cat-deadline:    #ffb347;
+  --cat-trip:        #6fe0a8;
+  --cat-food:        #ffcf5c;
+  --cat-sports:      #66d3ff;
+  --cat-general:     #aeb8d4;
+
+  /* ---- Typography (friendly, rounded display + clean body) ---- */
+  --font-display: "Nunito", system-ui, sans-serif;
+  --font-body:    "Hanken Grotesk", system-ui, sans-serif;
+  --display-tracking: -0.01em;
+  --display-transform: none;
+
+  /* ---- Depth (deep shadows read on the dark field) ---- */
+  --radius:    16px;
+  --radius-sm: 10px;
+  --shadow:    0 10px 28px rgba(0, 0, 0, 0.45);
+  --bg-image:  none;
+
+  /* ---- Decoration slots (themes fill these with background-image) ---- */
+  --deco-tl: none; --deco-tr: none;
+  --deco-bl: none; --deco-br: none;
+  --deco-size: 200px;
+
+  /* ---- Spacing scale (1920×1080 optimised, degrades with clamp) ---- */
+  --pad: clamp(12px, 1.2vw, 22px);
+  --gap: clamp(10px, 0.9vw, 16px);
+}
+
+/* ---- Reset ---- */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; }
+body {
+  font-family: var(--font-body);
+  color: var(--text);
+  background: var(--bg-image, none) var(--bg);
+  -webkit-font-smoothing: antialiased;
+  transition: background 600ms ease, color 600ms ease;
+}
+
+/* ---- Fixed layers (behind the board) ---- */
+/* Ambient effects canvas. Sits in FRONT of the board so confetti/snow/leaves
+   are visible; pointer-events:none keeps it non-interactive. */
+#fx {
+  position: fixed; inset: 0; width: 100%; height: 100%;
+  pointer-events: none; z-index: 6;
+}
+.deco {
+  position: fixed; width: var(--deco-size); height: var(--deco-size);
+  background-repeat: no-repeat; background-size: contain;
+  pointer-events: none; z-index: 1;
+}
+.deco--tl { top:0; left:0;   background-image: var(--deco-tl); }
+.deco--tr { top:0; right:0;  background-image: var(--deco-tr); }
+.deco--bl { bottom:0; left:0;  background-image: var(--deco-bl); }
+.deco--br { bottom:0; right:0; background-image: var(--deco-br); }
+
+/* ===== BOARD SHELL — 3 rows ===== */
+.board {
+  position: relative; z-index: 2;
+  height: 100vh; width: 100vw;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);    /* column can't exceed the board width */
+  grid-template-rows: auto 1fr auto auto;   /* topbar | main grid | coming-up | ticker */
+  gap: var(--gap);
+  padding: var(--pad);
+  background:
+    radial-gradient(ellipse 120% 60% at 80% -5%, var(--bg-2), transparent 55%),
+    radial-gradient(ellipse 80% 60% at -5% 105%, var(--bg-2), transparent 50%),
+    var(--bg);
+}
+
+/* ===== TOPBAR (navy brand band) ===== */
+.topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  background: var(--header-bg);
+  border-radius: var(--radius);
+  padding: calc(var(--pad) * 0.55) var(--pad);
+  box-shadow: var(--shadow);
+}
+.brand { display: flex; align-items: baseline; gap: 14px; }
+.brand__mark {
+  font-family: var(--font-display); font-weight: 900;
+  font-size: clamp(24px, 2.8vw, 46px);
+  letter-spacing: var(--display-tracking);
+  text-transform: var(--display-transform);
+  color: var(--header-text); line-height: 1;
+}
+.brand__season {
+  font-family: var(--font-display); font-weight: 800;
+  font-size: clamp(13px, 1.3vw, 22px);
+  color: var(--accent-gold);
+}
+.topbar__right { display: flex; align-items: center; gap: clamp(12px, 1.4vw, 24px); }
+.clock { text-align: right; }
+.clock__time {
+  font-family: var(--font-display); font-weight: 700; color: var(--header-text);
+  font-size: clamp(22px, 2.4vw, 40px);
+  line-height: 1; letter-spacing: var(--display-tracking);
+}
+.clock__date {
+  color: color-mix(in srgb, var(--header-text) 72%, transparent);
+  font-size: clamp(11px, 0.85vw, 15px); margin-top: 3px;
+}
+.countdown {
+  background: var(--accent-gold); color: var(--on-gold); font-weight: 800;
+  padding: 8px 16px; border-radius: 999px;
+  font-size: clamp(11px, 0.9vw, 16px); white-space: nowrap;
+}
+
+/* ===== MAIN GRID — 2 columns ===== */
+.grid {
+  display: grid;
+  grid-template-columns: 1.55fr 1fr;  /* ~60% schedule / ~40% info */
+  gap: var(--gap);
+  min-height: 0;                      /* essential: lets children respect 1fr height */
+}
+
+/* Both columns are flex columns.
+   min-width: 0 is CRITICAL — without it, grid `fr` tracks default to
+   min-width:auto and expand to their content's width, overflowing the board. */
+.col {
+  display: flex; flex-direction: column;
+  gap: var(--gap); min-height: 0; min-width: 0;
+}
+.col__title {
+  font-family: var(--font-display); font-weight: 900;
+  font-size: clamp(16px, 1.6vw, 28px);
+  letter-spacing: var(--display-tracking);
+  text-transform: var(--display-transform);
+  flex-shrink: 0;
+}
+
+/* ---- Now / Up Next (surprise #1) ---- */
+.nownext {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: var(--gap); flex-shrink: 0;
+}
+.nownext__cell {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 10px var(--pad);
+  box-shadow: var(--shadow); position: relative; overflow: hidden; min-width: 0;
+}
+.nownext__cell--now  { border-color: color-mix(in srgb, var(--today) 60%, var(--border)); }
+.nownext__cell--next { border-color: color-mix(in srgb, var(--accent-2) 50%, var(--border)); }
+.nownext__cell--now::before,
+.nownext__cell--next::before {
+  content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
+}
+.nownext__cell--now::before  { background: var(--today); }
+.nownext__cell--next::before { background: var(--accent-2); }
+.nownext__label {
+  display: block; font-size: clamp(10px, 0.75vw, 12px);
+  letter-spacing: 0.13em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 4px;
+}
+.nownext__cell--now .nownext__label { color: var(--today); }
+.nownext__title {
+  font-family: var(--font-display); font-weight: 600;
+  font-size: clamp(16px, 1.6vw, 26px); line-height: 1.15;
+}
+.pulse { animation: pulse 2.4s ease-in-out infinite; }
+@keyframes pulse { 0%,100%{ opacity:1; } 50%{ opacity:0.55; } }
+
+/* ---- Schedule ---- */
+.schedule {
+  display: flex; flex-direction: column; gap: 8px;
+  flex: 1; min-height: 0; min-width: 0; overflow: hidden;
+  /* Clips gracefully if there are more days than space. On the TV this
+     should comfortably fit a typical week; adjust font sizes if needed. */
+}
+.day {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 10px var(--pad);
+  box-shadow: var(--shadow); flex-shrink: 0;
+}
+.day--today {
+  border-color: var(--today);
+  background: linear-gradient(160deg, color-mix(in srgb, var(--today) 10%, transparent), transparent 50%), var(--surface);
+}
+.day__head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 6px; }
+.day__name {
+  font-family: var(--font-display); font-weight: 600;
+  font-size: clamp(13px, 1.2vw, 20px); text-transform: uppercase; letter-spacing: 0.06em;
+}
+.day--today .day__name { color: var(--today); }
+.day__tag {
+  font-size: clamp(9px, 0.7vw, 12px); letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--today); font-weight: 800;
+}
+.day__date { color: var(--text-dim); font-size: clamp(11px, 0.85vw, 14px); }
+.evt {
+  display: flex; align-items: center; gap: 10px;
+  padding: 5px 0; border-top: 1px solid color-mix(in srgb, var(--border) 50%, transparent);
+}
+.evt:first-of-type { border-top: none; }
+.evt__time {
+  font-variant-numeric: tabular-nums; font-weight: 700;
+  font-size: clamp(12px, 0.95vw, 17px); min-width: clamp(52px, 5.5vw, 84px);
+}
+.evt__dot { width: 9px; height: 9px; border-radius: 50%; flex: 0 0 auto; }
+.evt__title { font-size: clamp(12px, 1vw, 18px); font-weight: 500; flex: 1; min-width: 0; }
+.evt__loc { color: var(--text-dim); font-size: clamp(10px, 0.8vw, 14px); }
+.evt__aud {
+  color: var(--text-dim); font-size: clamp(10px, 0.8vw, 14px);
+  white-space: nowrap; margin-left: auto;
+}
+
+/* ---- Coming up (bottom of left column) ---- */
+.comingup {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 8px var(--pad);
+  box-shadow: var(--shadow); flex-shrink: 0;
+}
+.comingup__label {
+  font-family: var(--font-display); font-weight: 900; color: var(--accent-2);
+  text-transform: var(--display-transform); white-space: nowrap;
+  font-size: clamp(12px, 1vw, 17px); flex-shrink: 0;
+}
+.comingup__track {
+  display: flex; gap: 8px; overflow: hidden; flex: 1; align-items: center;
+}
+.chip {
+  display: flex; align-items: baseline; gap: 6px; white-space: nowrap;
+  background: var(--surface-2); border-radius: 999px; padding: 5px 12px;
+  border: 1px solid var(--border); flex-shrink: 0;
+}
+.chip__date { color: var(--accent); font-weight: 800; font-size: clamp(10px, 0.8vw, 13px); }
+.chip__title { font-weight: 500; font-size: clamp(11px, 0.85vw, 15px); }
+
+/* ===== RIGHT COLUMN PANELS ===== */
+.col--side { min-height: 0; }   /* inherits .col flex-column */
+
+/* All panels share these base styles.
+   min-width: 0 so a panel (as a flex item in a column) can shrink instead of
+   forcing the column — especially important for the iframe panel. */
+.panel {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow);
+  min-height: 0; min-width: 0;
+}
+.panel__title {
+  font-family: var(--font-display); font-weight: 900;
+  font-size: clamp(14px, 1.3vw, 22px); letter-spacing: var(--display-tracking);
+  text-transform: var(--display-transform);
+  display: flex; align-items: center; gap: 8px;
+}
+.panel__sub {
+  color: var(--text-dim); font-size: clamp(10px, 0.8vw, 13px);
+  font-weight: 500; font-family: var(--font-body);
+  letter-spacing: 0; text-transform: none;
+}
+
+/* ---- House Cup iframe (left column, under the schedule) ---- */
+.panel--soarpoints {
+  flex: 0 0 auto;                   /* PROTECTED — keeps its height. */
+  height: clamp(280px, 32vh, 400px);/* This Week (flex:1 above) clips before this does. */
+  padding: 0; overflow: hidden;     /* iframe fills edge-to-edge inside the panel border */
+}
+.soarpoints-frame {
+  width: 100%; height: 100%; border: none; display: block;
+}
+
+/* ---- On Duty ---- */
+.panel--duty {
+  flex: 0 0 auto;                   /* sized to content, not stretched */
+  padding: var(--pad);
+  display: flex; flex-direction: column; gap: 8px;
+}
+.duty { display: flex; flex-direction: column; gap: 2px; }
+/* Each period group (Morning / Midday / Afternoon). The current one is tinted. */
+.duty__group { padding: 2px 0; }
+.duty__group--current {
+  background: color-mix(in srgb, var(--today) 12%, transparent);
+  border-left: 3px solid var(--today);
+  border-radius: var(--radius-sm);
+  padding: 4px 10px; margin: 2px -10px;
+}
+.duty__group-label {
+  font-size: clamp(9px, 0.72vw, 12px); letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--text-dim); font-weight: 800;
+  margin-bottom: 2px;
+}
+.duty__group--current .duty__group-label { color: var(--today); }
+.duty__now-dot { color: var(--today); }
+.duty__row {
+  display: grid; grid-template-columns: auto 1fr auto;
+  gap: 8px; align-items: baseline;
+  padding: 3px 0;
+  border-top: 1px solid color-mix(in srgb, var(--border) 40%, transparent);
+}
+.duty__row:first-of-type { border-top: none; }
+.duty__time {
+  color: var(--text-dim); font-variant-numeric: tabular-nums;
+  font-size: clamp(10px, 0.8vw, 13px); white-space: nowrap;
+}
+.duty__name { font-weight: 700; font-size: clamp(12px, 0.95vw, 16px); min-width: 0; }
+.duty__where { color: var(--text-dim); font-size: clamp(10px, 0.78vw, 13px); text-align: right; white-space: nowrap; }
+.duty__empty { color: var(--text-dim); font-style: italic; font-size: clamp(12px, 1vw, 17px); }
+
+/* ---- Scan to Log (4 tiles, 2×2) ---- */
+.panel--scan {
+  flex: 0 0 auto;
+  padding: var(--pad);
+}
+.scan { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--gap); }
+.scan__tile {
+  background: var(--surface-2); border-radius: var(--radius-sm); padding: 8px;
+  display: flex; flex-direction: column; align-items: center; gap: 5px; text-align: center;
+}
+.scan__qr {
+  background: #fff; padding: 5px; border-radius: 6px; line-height: 0;
+  width: clamp(60px, 5vw, 84px); height: clamp(60px, 5vw, 84px);
+  display: flex; align-items: center; justify-content: center;
+}
+.scan__qr img, .scan__qr canvas { width: 100% !important; height: 100% !important; }
+.scan__label { font-weight: 700; font-size: clamp(10px, 0.82vw, 14px); }
+/* Reserved seasonal slot — empty dashed box until a URL is added in CONFIG */
+.scan__tile--placeholder { opacity: 0.7; }
+.scan__qr--empty {
+  background: transparent; border: 2px dashed var(--border);
+}
+.scan__hint { color: var(--text-dim); font-size: clamp(9px, 0.7vw, 12px); line-height: 1.2; }
+
+/* ===== TICKER (navy band) ===== */
+.ticker {
+  display: flex; align-items: center;
+  background: var(--header-bg); border: none;
+  border-radius: var(--radius); overflow: hidden; flex-shrink: 0;
+}
+.ticker__tag {
+  background: var(--accent-gold); color: var(--on-gold); font-weight: 800;
+  padding: 10px 16px; white-space: nowrap; letter-spacing: 0.04em;
+  font-size: clamp(11px, 0.85vw, 15px); align-self: stretch;
+  display: flex; align-items: center;
+}
+.ticker__viewport { overflow: hidden; flex: 1; }
+.ticker__track {
+  display: inline-flex; gap: 48px; white-space: nowrap; padding-left: 100%;
+  animation: ticker var(--ticker-duration, 40s) linear infinite;
+}
+.ticker__item { font-size: clamp(12px, 0.95vw, 17px); padding: 10px 0; color: var(--header-text); }
+.ticker__item--high { color: var(--accent-gold); font-weight: 700; }
+.ticker__item--high::before { content: "★ "; }
+@keyframes ticker { from { transform: translateX(0); } to { transform: translateX(-100%); } }
+
+/* ===== STAMP ===== */
+.stamp {
+  position: fixed; right: 8px; bottom: 4px; z-index: 5;
+  color: var(--text-dim); opacity: 0.3; font-size: 10px;
+  font-variant-numeric: tabular-nums; pointer-events: none;
+}
+
+/* ===== REDUCED MOTION ===== */
+@media (prefers-reduced-motion: reduce) {
+  .ticker__track { animation: none; padding-left: 0; }
+  .pulse { animation: none; }
+}
+
+/* ===== UTILITIES ===== */
+[hidden] { display: none !important; }
