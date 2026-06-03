@@ -210,9 +210,9 @@ body {
 /* ---- Schedule ---- */
 .schedule {
   display: flex; flex-direction: column; gap: 8px;
-  flex: 1; min-height: 0; min-width: 0; overflow: hidden;
-  /* Clips gracefully if there are more days than space. On the TV this
-     should comfortably fit a typical week; adjust font sizes if needed. */
+  flex: 0 1 auto; min-height: 0; min-width: 0; overflow: hidden;
+  /* Sizes to its content so the bottom row sits right beneath it. If there are
+     more days than fit, the column shrinks this and fitSchedule() clips extras. */
 }
 .day {
   background: var(--surface); border: 1px solid var(--border);
@@ -226,28 +226,28 @@ body {
 .day__head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 6px; }
 .day__name {
   font-family: var(--font-display); font-weight: 600;
-  font-size: clamp(13px, 1.2vw, 20px); text-transform: uppercase; letter-spacing: 0.06em;
+  font-size: clamp(16px, 1.5vw, 26px); text-transform: uppercase; letter-spacing: 0.06em;
 }
 .day--today .day__name { color: var(--today); }
 .day__tag {
   font-size: clamp(9px, 0.7vw, 12px); letter-spacing: 0.12em;
   text-transform: uppercase; color: var(--today); font-weight: 800;
 }
-.day__date { color: var(--text-dim); font-size: clamp(11px, 0.85vw, 14px); }
+.day__date { color: var(--text-dim); font-size: clamp(12px, 0.95vw, 16px); }
 .evt {
   display: flex; align-items: center; gap: 10px;
-  padding: 5px 0; border-top: 1px solid color-mix(in srgb, var(--border) 50%, transparent);
+  padding: 6px 0; border-top: 1px solid color-mix(in srgb, var(--border) 50%, transparent);
 }
 .evt:first-of-type { border-top: none; }
 .evt__time {
   font-variant-numeric: tabular-nums; font-weight: 700;
-  font-size: clamp(12px, 0.95vw, 17px); min-width: clamp(52px, 5.5vw, 84px);
+  font-size: clamp(14px, 1.2vw, 22px); min-width: clamp(58px, 6vw, 96px);
 }
-.evt__dot { width: 9px; height: 9px; border-radius: 50%; flex: 0 0 auto; }
-.evt__title { font-size: clamp(12px, 1vw, 18px); font-weight: 500; flex: 1; min-width: 0; }
-.evt__loc { color: var(--text-dim); font-size: clamp(10px, 0.8vw, 14px); }
+.evt__dot { width: 10px; height: 10px; border-radius: 50%; flex: 0 0 auto; }
+.evt__title { font-size: clamp(15px, 1.3vw, 24px); font-weight: 500; flex: 1; min-width: 0; }
+.evt__loc { color: var(--text-dim); font-size: clamp(12px, 0.95vw, 17px); }
 .evt__aud {
-  color: var(--text-dim); font-size: clamp(10px, 0.8vw, 14px);
+  color: var(--text-dim); font-size: clamp(12px, 0.95vw, 17px);
   white-space: nowrap; margin-left: auto;
 }
 
@@ -297,23 +297,29 @@ body {
   letter-spacing: 0; text-transform: none;
 }
 
-/* ---- House Cup iframe (left column, under the schedule) ---- */
+/* ---- Bottom row of the left column: QR grid beside the House Cup ---- */
+.bottomrow {
+  display: flex; gap: var(--gap);
+  flex: 1 1 auto;                   /* rises to sit just under the schedule, fills down to the ticker */
+  min-height: clamp(260px, 26vh, 320px);
+  min-width: 0;
+}
+/* House Cup — embedded from soarpoints.web.app/display; fills the rest of the row. */
 .panel--soarpoints {
-  flex: 0 0 auto;                   /* PROTECTED — keeps its height. */
-  height: clamp(280px, 32vh, 400px);/* This Week (flex:1 above) clips before this does. */
+  flex: 1; min-width: 0; height: 100%;
   padding: 0; overflow: hidden;     /* iframe fills edge-to-edge inside the panel border */
 }
 .soarpoints-frame {
   width: 100%; height: 100%; border: none; display: block;
 }
 
-/* ---- On Duty ---- */
+/* ---- On Duty (now owns the entire right column) ---- */
 .panel--duty {
-  flex: 0 0 auto;                   /* sized to content, not stretched */
+  flex: 1;                          /* fills the full right-column height */
   padding: var(--pad);
   display: flex; flex-direction: column; gap: 8px;
 }
-.duty { display: flex; flex-direction: column; gap: 2px; }
+.duty { display: flex; flex-direction: column; gap: 3px; }
 /* Each period group (Morning / Midday / Afternoon). The current one is tinted. */
 .duty__group { padding: 2px 0; }
 .duty__group--current {
@@ -323,7 +329,7 @@ body {
   padding: 4px 10px; margin: 2px -10px;
 }
 .duty__group-label {
-  font-size: clamp(9px, 0.72vw, 12px); letter-spacing: 0.14em;
+  font-size: clamp(11px, 0.95vw, 15px); letter-spacing: 0.14em;
   text-transform: uppercase; color: var(--text-dim); font-weight: 800;
   margin-bottom: 2px;
 }
@@ -332,35 +338,41 @@ body {
 .duty__row {
   display: grid; grid-template-columns: auto 1fr auto;
   gap: 8px; align-items: baseline;
-  padding: 3px 0;
+  padding: 6px 0;
   border-top: 1px solid color-mix(in srgb, var(--border) 40%, transparent);
 }
 .duty__row:first-of-type { border-top: none; }
 .duty__time {
   color: var(--text-dim); font-variant-numeric: tabular-nums;
-  font-size: clamp(10px, 0.8vw, 13px); white-space: nowrap;
+  font-size: clamp(12px, 1.05vw, 18px); white-space: nowrap;
 }
-.duty__name { font-weight: 700; font-size: clamp(12px, 0.95vw, 16px); min-width: 0; }
-.duty__where { color: var(--text-dim); font-size: clamp(10px, 0.78vw, 13px); text-align: right; white-space: nowrap; }
-.duty__empty { color: var(--text-dim); font-style: italic; font-size: clamp(12px, 1vw, 17px); }
+.duty__name { font-weight: 700; font-size: clamp(15px, 1.45vw, 25px); min-width: 0; }
+.duty__where { color: var(--text-dim); font-size: clamp(12px, 1vw, 17px); text-align: right; white-space: nowrap; }
+.duty__empty { color: var(--text-dim); font-style: italic; font-size: clamp(13px, 1.1vw, 19px); }
 
-/* ---- Scan to Log (4 tiles, 2×2) ---- */
+/* ---- Scan to Log (2 tiles side by side, larger QR codes) ---- */
 .panel--scan {
   flex: 0 0 auto;
+  width: clamp(220px, 21vw, 330px); /* the QR block; House Cup takes the rest of the row */
+  height: 100%;
   padding: var(--pad);
+  display: flex; flex-direction: column; gap: 8px; justify-content: flex-start;
 }
-.scan { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--gap); }
+.scan {
+  display: grid; grid-template-columns: repeat(2, 1fr); /* 2 tiles side by side */
+  gap: var(--gap);
+}
 .scan__tile {
-  background: var(--surface-2); border-radius: var(--radius-sm); padding: 8px;
-  display: flex; flex-direction: column; align-items: center; gap: 5px; text-align: center;
+  background: var(--surface-2); border-radius: var(--radius-sm); padding: 10px;
+  display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center;
 }
 .scan__qr {
-  background: #fff; padding: 5px; border-radius: 6px; line-height: 0;
-  width: clamp(60px, 5vw, 84px); height: clamp(60px, 5vw, 84px);
+  background: #fff; padding: 6px; border-radius: 8px; line-height: 0;
+  width: clamp(80px, 7vw, 120px); height: clamp(80px, 7vw, 120px);
   display: flex; align-items: center; justify-content: center;
 }
 .scan__qr img, .scan__qr canvas { width: 100% !important; height: 100% !important; }
-.scan__label { font-weight: 700; font-size: clamp(10px, 0.82vw, 14px); }
+.scan__label { font-weight: 700; font-size: clamp(11px, 0.9vw, 15px); }
 /* Reserved seasonal slot — empty dashed box until a URL is added in CONFIG */
 .scan__tile--placeholder { opacity: 0.7; }
 .scan__qr--empty {

@@ -27,15 +27,16 @@ const CONFIG = {
   // codes staff can scan off the wall to log from their phone.
   // url: null + placeholder: true → renders an empty dashed "reserved" tile.
   forms: [
-    { label: "House Points", url: "https://forms.gle/REPLACE-house-points" },
-    { label: "Spirit Tally", url: "https://forms.gle/REPLACE-spirit-tally" },
+    { label: "House Points", url: "https://soarpoints.web.app" },
     { label: "Work Order",   url: "https://docs.google.com/forms/d/e/1FAIpQLSecmNhWMgJS66Z0pOvKgm3SN59iCmgd9UVe6YIE7558d-9H_g/viewform" },
-    { label: "Seasonal",     url: null, placeholder: true },  // drop a URL here when a seasonal form goes live
   ],
 
   // ---- Countdown chip (top-right). Set to null to hide. ----
   // Shows "N days to <label>". Refresh the date each year.
   countdownTo: { label: "Last Day", date: "2026-06-12" },
+
+  // Shown in the ticker when there are no announcements, so the bar is always present.
+  tickerFallback: "SOAR Charter Academy",
 
   // ---- Refresh cadences (milliseconds) ----
   reloadSignageMs: 5 * 60 * 1000,  // re-read signage.json (catch a new weekly run)
@@ -258,7 +259,7 @@ function fitSchedule(wrap) {
   let used = 0;
   for (let i = 0; i < cards.length; i++) {
     used += (i > 0 ? gap : 0) + cards[i].offsetHeight;
-    if (used > maxH) {
+    if (used > maxH + 2) {   // tolerance: avoids sub-pixel false-clips when content-sized
       cards.slice(i === 0 ? 1 : i).forEach((c) => c.remove());
       break;
     }
@@ -313,10 +314,38 @@ function renderNowNext() {
 // matching the current clock time gets highlighted so the eye lands on what's
 // relevant right now — without hiding the rest of the day.
 function currentDutyPeriod() {
-  const mins = new Date().getHours() * 60 + new Date().getMinutes();
-  if (mins < 10 * 60 + 30) return "am";   // before 10:30 → morning
-  if (mins < 13 * 60 + 30) return "mid";  // 10:30–1:30 → midday / nutrition
-  return "pm";                             // after 1:30 → afternoon dismissal
+  const nowMins = new Date().getHours() * 60 + new Date().getMinutes();
+  const GRACE   = 20; // minutes after a period's last shift ends before the next becomes "now"
+
+  // Parse each assignment's time string ("7:30–7:45a", "3:10–3:20p") to find the
+  // latest end-time (in minutes since midnight) for a given period.
+  // Returns -1 when no parseable times exist (e.g. "Nutrition", "Recess").
+  const assignments = (STATE.signage.yard_duty?.assignments) || [];
+  function latestEnd(part) {
+    let max = -1;
+    for (const a of assignments) {
+      if (a.part !== part) continue;
+      const m = (a.time || "").match(/(\d+):(\d+)([ap])\s*$/i); // end time is last H:MMa/p
+      if (!m) continue;
+      let h = +m[1];
+      if (m[3].toLowerCase() === "p" && h !== 12) h += 12;
+      if (m[3].toLowerCase() === "a" && h === 12) h  = 0;
+      max = Math.max(max, h * 60 + +m[2]);
+    }
+    return max;
+  }
+
+  const amEnd  = latestEnd("am");   // e.g. 475 for 7:55 a.m.
+  const midEnd = latestEnd("mid");  // -1 if midday slots have no clock times
+
+  // Prefer actual shift end + grace; fall back to hard thresholds when end
+  // time is unknown (Nutrition / Recess labels can't be parsed to a clock time).
+  const amToMid = amEnd  >= 0 ? amEnd  + GRACE : 10 * 60 + 30;
+  const midToPm = midEnd >= 0 ? midEnd + GRACE : 13 * 60 + 30;
+
+  if (nowMins < amToMid) return "am";
+  if (nowMins < midToPm) return "mid";
+  return "pm";
 }
 
 const PERIOD_LABELS = { am: "Morning", mid: "Midday", pm: "Afternoon" };
@@ -401,6 +430,7 @@ function renderScan() {
 /* ====================== coming up strip ====================== */
 function renderComingUp() {
   const track = $("#comingUp");
+  if (!track) return;   // Coming Up was removed from the layout — bail before touching it
   track.innerHTML = "";
   const today = todayLocal();
   const weekEnd = endOfWeek(today);
@@ -428,8 +458,8 @@ function renderComingUp() {
 function renderTicker() {
   const wrap = $("#tickerWrap");
   const track = $("#ticker");
-  const items = STATE.signage.announcements || [];
-  if (items.length === 0) { wrap.hidden = true; return; }
+  let items = STATE.signage.announcements || [];
+  if (items.length === 0) items = [{ text: CONFIG.tickerFallback || "" }];
   wrap.hidden = false;
 
   track.innerHTML = "";

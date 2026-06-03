@@ -41,7 +41,7 @@
     <!-- ===== Two-column body ===== -->
     <div class="grid">
 
-      <!-- LEFT: This Week (top) + House Points (below) -->
+      <!-- LEFT: This Week (top) + [QR grid · House Cup] bottom row -->
       <section class="col col--main">
 
         <div class="nownext" id="nowNext" hidden>
@@ -58,46 +58,34 @@
         <h2 class="col__title">This Week</h2>
         <div class="schedule" id="schedule"></div>
 
-        <!-- House Cup — embedded from soarpoints.web.app/display.
-             Lives under the schedule. This is the panel we let clip first if
-             vertical space is tight; the duty board on the right stays whole. -->
-        <section class="panel panel--soarpoints" aria-label="House Cup">
-          <iframe
-            class="soarpoints-frame"
-            src="https://soarpoints.web.app/display"
-            title="SOAR House Cup — Live Standings"
-            allowfullscreen
-          ></iframe>
-        </section>
+        <!-- Bottom row: Scan-to-Log QR grid (left) beside the House Cup (right).
+             Fixed height; the schedule above (flex:1) clips first if space runs short. -->
+        <div class="bottomrow">
+          <section class="panel panel--scan">
+            <h2 class="panel__title">Scan to Log</h2>
+            <div class="scan" id="scan"></div>
+          </section>
+          <section class="panel panel--soarpoints" aria-label="House Cup">
+            <iframe
+              class="soarpoints-frame"
+              src="https://soarpoints.web.app/display"
+              title="SOAR House Cup — Live Standings"
+              allowfullscreen
+            ></iframe>
+          </section>
+        </div>
 
       </section>
 
-      <!-- RIGHT: full-day duty + scan -->
+      <!-- RIGHT: full-day duty, takes the whole column -->
       <aside class="col col--side">
-
-        <!-- On Duty — ALWAYS shows the full day, grouped by period,
-             with the current period highlighted. This panel is protected:
-             it gets its full natural height before scan takes what's left. -->
         <section class="panel panel--duty">
           <h2 class="panel__title">On Duty</h2>
           <p class="panel__sub" id="dutyWeek"></p>
           <div class="duty" id="duty"></div>
         </section>
-
-        <!-- Scan to Log — 4 tiles (one reserved for a seasonal form) -->
-        <section class="panel panel--scan">
-          <h2 class="panel__title">Scan to Log</h2>
-          <div class="scan" id="scan"></div>
-        </section>
-
       </aside>
     </div>
-
-    <!-- ===== Coming Up (full-width strip) ===== -->
-    <section class="comingup">
-      <span class="comingup__label">Coming Up</span>
-      <div class="comingup__track" id="comingUp"></div>
-    </section>
 
     <!-- ===== Announcements ticker ===== -->
     <footer class="ticker" id="tickerWrap" hidden>

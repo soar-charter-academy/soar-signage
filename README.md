@@ -1,185 +1,241 @@
-# SOAR Staff-Room Signage
+# SOAR Staff Signage
 
-A two-part digital signage system for the staff room:
+A staff-room digital signage board for SOAR Charter Academy. A small Python
+program reads the week's staff bulletin and the yard-duty Google Sheet, and a
+self-contained web page renders the week's events, the duty schedule, and a live
+house-points display on a hallway TV — refreshing itself and changing its look
+with the seasons.
 
-- **`updater/`** — run once a week. It reads the weekly bulletin (`.docx`),
-  pulls yard duty from the Google Sheet, lets you type extra announcements, and
-  writes **`display/data/signage.json`**.
-- **`display/`** — a kiosk web page. It reads that JSON, shows the schedule and
-  duty board, and embeds the live **House Cup** directly from
-  `soarpoints.web.app/display` (no reinventing the wheel — the cycling
-  daily/weekly/monthly/yearly views come along for free).
+The board runs unattended on a [Vivi](https://www.vivi.io/) signage screen,
+pointed at a single Firebase-hosted URL. Keeping it current takes one person a
+couple of minutes a week.
+
+> _Screenshot: add `docs/board.png` here once captured — a live shot of the board
+> is the fastest way for a reader to understand the project._
+
+---
+
+## Overview
+
+Every week the front office publishes a staff bulletin (a Word document) and
+maintains a yard-duty rotation (a Google Sheet). That information was previously
+trapped in documents nobody opened. This project surfaces it on a screen staff
+actually walk past, with zero manual re-typing.
+
+The design goal was a board that is **effortless to keep live** and **safe by
+default** — specifically, one that can read a bulletin full of student names
+without any of that data ever leaving the building.
+
+## How It Works
+
+The system is two cooperating halves that share a single data file,
+`display/data/signage.json`:
+
+**1. The Updater (`updater/`, Python).** Run once a week from the office Mac. It
+opens the week's bulletin, strips out anything resembling student data, asks
+Claude (Anthropic's API) to pull out the structured events, reads the current
+week's duty assignments from the Google Sheet, collects any typed-in
+announcements, and writes the result to `signage.json`.
+
+**2. The Display (`display/`, plain HTML/CSS/JavaScript).** A single web page
+that reads `signage.json` and renders the board: a "This Week" schedule, a
+live "now / up next" banner, the day's duty roster grouped by morning / midday /
+afternoon with the current period highlighted, QR codes for logging house points
+and work orders, a scrolling announcements ticker, and an embedded live
+house-points panel. It re-reads the data and re-checks the time on a timer, so
+the screen stays correct all day without anyone touching it.
+
+The two halves are deliberately decoupled. The Updater can run (or fail) without
+affecting a board that's already on screen, and the Display has no dependency on
+Python, a server, or a database — it's just files.
+
+```
+   Weekly bulletin (.docx) -+
+                            +-->  Updater (Python)  -->  signage.json  -->  Display (web)  -->  Firebase  -->  Vivi TV
+   Yard-duty Google Sheet --+                                                  ^
+                                                                               +-- live house-points iframe
+```
+
+## Privacy & Student-Data Protection
+
+The bulletin routinely contains student names (in sections like behavior tallies
+or differentiated-assistance lists). None of that is allowed to reach an external
+API. Three layers enforce this, in `updater/sanitize.py`:
+
+1. **Hard cut at known markers.** Everything from the first sensitive section
+   heading (e.g. "Differentiated Assistance," "House Points") to the end of the
+   document is removed before anything else happens.
+2. **Pattern scrubbing.** Roster-style lines that survive the cut are stripped by
+   regular expression.
+3. **A human confirmation gate.** The Updater prints the exact text it is about to
+   send and refuses to continue until the operator types `yes`.
+
+Duty names are staff, not students, and come from the Google Sheet — they never
+pass through the bulletin pipeline or the API. All credentials live in an
+untracked `.env` file and a service-account key that is git-ignored; the Google
+service account is **read-only** and is granted access to exactly one Sheet.
+
+## Tech Stack
+
+- **Python 3.12** — the Updater
+- **Anthropic Claude API** — extracting structured events from free-form bulletin prose
+- **Google Sheets API** via `gspread` + `google-auth` — reading the duty rotation (read-only)
+- **`python-docx`** — reading the bulletin
+- **Vanilla HTML / CSS / JavaScript** — the Display (no framework, no build step)
+- **Firebase Hosting** — serving the board at a stable URL for Vivi
+
+## Repository Structure
 
 ```
 soar-signage/
-├── updater/         run weekly  →  writes display/data/signage.json
-├── display/
-│   ├── index.html   the board
-│   ├── style.css    layout; all colors/fonts via CSS variables
-│   ├── app.js       CONFIG lives here (form URLs, countdown)
-│   ├── themes/
-│   │   ├── themes.json   date-range registry (12 skins)
-│   │   └── themes.css    12 seasonal skins as variable-override blocks
-│   ├── effects.js   optional snow/leaves/confetti (themes opt in)
-│   └── data/
-│       ├── signage.json         ← this is what the updater writes
-│       └── signage.sample.json  ← starting data so the board works immediately
+|-- firebase.json              # Firebase Hosting config (serves the display/ folder)
+|-- updater/                   # the weekly Python program
+|   |-- config.py              # * the one file you edit - paths, IDs, post definitions
+|   |-- update_signage.py      # orchestrator: pick bulletin -> run pipeline -> write JSON
+|   |-- bulletin.py            # read .docx -> sanitize -> confirm -> Claude -> structured events
+|   |-- sanitize.py            # the student-data protection layer
+|   |-- yard_duty.py           # read the current week's duty from the Google Sheet
+|   |-- patch_duty.py          # helper: refresh only the duty data, no bulletin needed
+|   |-- run_update.command     # double-click launcher for macOS
+|   |-- requirements.txt       # Python dependencies
+|   |-- .env                   # secrets (NOT in git) - you create this
+|   `-- service-account.json   # Google key (NOT in git) - you download this
+`-- display/                   # the web board (this folder is what gets hosted)
+    |-- index.html
+    |-- style.css
+    |-- app.js                 # data loading, rendering, theming, refresh timers
+    |-- effects.js             # seasonal particle effects (snow / leaves / confetti)
+    |-- themes/
+    |   |-- themes.json        # which theme is active on which dates, + effects
+    |   `-- themes.css         # the per-season color palettes
+    `-- data/
+        |-- signage.json       # live data the board reads (written by the Updater)
+        `-- signage.sample.json # a realistic example for previewing without a run
 ```
 
----
+## Getting Started
 
-## The one rule: student data never reaches the API
+### Prerequisites
 
-The bulletin's free-text events are parsed by the Anthropic API (wording drifts
-weekly). But student names (the *Differentiated Assistance* roster) must never
-be sent. Three layers enforce this:
+- macOS with **Python 3.12** (`python3.12 --version` to check)
+- A **Google Cloud project** with the **Google Sheets API** enabled
+- An **Anthropic API key** (from [console.anthropic.com](https://console.anthropic.com))
+- The **Firebase CLI** for deployment (`npm install -g firebase-tools`)
 
-1. **Cut** — `sanitize.py` deletes everything from the first stop-marker
-   (`Differentiated Assistance`, `House Points`, `Spirit Tally`) to end-of-doc.
-2. **Scrub** — any remaining line that looks like a roster entry is dropped.
-3. **You** — the updater prints the *exact* text it's about to send and waits
-   for you to type `yes`. Nothing leaves unseen.
-
-Yard-duty names come straight from the Sheet and never touch the API.
-
----
-
-## Setup
-
-### 1. Updater
+### 1. Install Python dependencies
 
 ```bash
-cd updater
-pip install --break-system-packages -r requirements.txt
+pip install --break-system-packages -r updater/requirements.txt
 ```
 
-Create `updater/.env` (never commit this):
+### 2. Add your Anthropic API key
+
+Create `updater/.env` (it is git-ignored) and add:
 
 ```
-ANTHROPIC_API_KEY=sk-ant-...
-GOOGLE_SERVICE_ACCOUNT_FILE=/absolute/path/to/service-account.json
+ANTHROPIC_API_KEY=sk-ant-your-key-here
 ```
 
-**Google Sheets access (5 min, one-time):**
-1. Google Cloud Console → create project → enable **Google Sheets API**.
-2. Create a **Service Account** → add a JSON key → download it. Put its path
-   in `.env`.
-3. Open the yard-duty Sheet → **Share** → paste the service account email
-   (`name@project.iam.gserviceaccount.com`) with **Viewer** access.
+### 3. Set up Google Sheets access
 
-Run it:
+The Updater reads the duty Sheet through a **service account** — a robot Google
+account that you grant read access to one specific Sheet.
+
+1. In your Google Cloud project, enable the **Google Sheets API**.
+2. Create a **service account**, then create a **JSON key** for it and download
+   the file. Save it as `updater/service-account.json`.
+3. Open the duty Sheet, click **Share**, and add the service account's email
+   (it looks like `name@project.iam.gserviceaccount.com`) as a **Viewer**.
+4. Add the key's path to `updater/.env`:
+
+```
+GOOGLE_SERVICE_ACCOUNT_FILE=service-account.json
+```
+
+No project roles or Drive permissions are needed — sharing the Sheet is what
+grants access.
+
+### 4. Configure the project — `updater/config.py`
+
+This is the single file you edit to point the system at your data. It is
+organized in numbered sections:
+
+- **Paths** — usually left alone.
+- **Anthropic** — the model name (defaults to a current Claude model).
+- **Sanitize** — the section headings that trigger the hard cut, and the
+  roster-line patterns. Update these if the bulletin's format changes.
+- **Yard duty** — the `YARD_DUTY_SHEET_ID` and the Sheet's layout (see below).
+- **Post definitions** — maps each duty post label to its time and location.
+  The keys here **must match the post labels in column A of the Sheet** (the
+  match is case-insensitive). A mismatch silently drops that post's time/location.
+
+#### How the duty Sheet is read
+
+The reader expects one tab per cycle, named like **`Cycle 10`** (it matches any
+tab named `Cycle <number>` automatically — you don't reconfigure it each cycle).
+Within a tab, weeks sit side by side in column groups, each headed by a cell like
+`Week 1 (June 1st - 5th)`:
+
+| Column A       | Column B     | _(gap)_ | Column D       | Column E     |
+| -------------- | ------------ | ------- | -------------- | ------------ |
+| Week 1 (dates) |              |         | Week 2 (dates) |              |
+| _post label_   | _staff name_ |         | _post label_   | _staff name_ |
+| ...            | ...          |         | ...            | ...          |
+
+Weeks advance by three columns (A -> D -> G -> J), with the staff name one column
+to the right of each post label. Those offsets are all configurable constants in
+the **Yard duty** section. The reader finds the week block containing today's
+date, or falls back to the next upcoming week (so the board shows next week's
+duty over a weekend or break). If it can't read the Sheet, it fails quietly and
+leaves the rest of the board working.
+
+### 5. Configure the display — `display/app.js`
+
+At the top of `app.js` is a `CONFIG` object holding the QR-code form URLs (House
+Points, Spirit Tally, Work Order) and the `countdownTo` date shown in the header.
+Update these to your own links and dates.
+
+## Weekly Workflow
+
+1. Double-click **`updater/run_update.command`** (the first time, you may need to
+   run `chmod +x updater/run_update.command` to allow it).
+2. Choose this week's bulletin `.docx` in the file picker.
+3. Review the sanitized text it prints, and type `yes` to send it.
+4. Add any announcements when prompted (prefix one with `!` to mark it
+   high-priority in the ticker).
+5. It writes the new `signage.json`.
+6. Publish it (see Deployment).
+
+To refresh **only** the duty roster mid-week without re-running a bulletin, run
+`python3.12 updater/patch_duty.py` — it pulls fresh assignments from the Sheet
+and updates `signage.json` in place.
+
+## Deployment (Firebase Hosting)
+
+The `display/` folder is hosted on Firebase. To publish the current `signage.json`
+(or any change):
 
 ```bash
-python3.12 update_signage.py     # or double-click run_update.command
+firebase deploy --only hosting
 ```
 
-> **If you skip the API key** the updater still runs — events just won't be
-> auto-extracted. Type things into the announcements box instead.
+That pushes the board to its public URL, which Vivi displays. A deploy takes
+about a minute to go live.
 
-### 2. Display
+## Theming
 
-Static files — serve the `display/` folder any way you like:
+The board changes its palette and ambient effect by date, configured in
+`display/themes/themes.json` — each theme has a label, an effect (snow, leaves,
+confetti, or none), and the date windows it's active. Palettes live in
+`themes/themes.css`. The default skin is SOAR's navy / red / gold. New seasons
+are added by editing those two files; no code changes are required.
 
-```bash
-cd display
-python3 -m http.server 8080
-# open http://localhost:8080 → F11 fullscreen
-```
+## Author
 
-The board works immediately on `signage.sample.json`. The soarpoints iframe
-will show live house points once it confirms framing isn't blocked.
-
-### 3. House Cup iframe — one thing to verify
-
-The House Cup is an iframe pointing at `https://soarpoints.web.app/display`.
-Open the board in a browser, then open DevTools (F12) → Console tab. If you
-see a "refused to display in a frame" error, the app is sending an
-`X-Frame-Options` header. Fix: add this to `firebase.json` in the
-**soarpoints** project (not this one) and redeploy:
-
-```json
-"headers": [{
-  "source": "**",
-  "headers": [{ "key": "X-Frame-Options", "value": "ALLOWALL" }]
-}]
-```
-
-Firebase doesn't set this header by default, so it will probably just work.
-
-### 4. Quick CONFIG edits in `display/app.js`
-
-Near the top of `app.js` is a `CONFIG` object — two things to update:
-
-```js
-forms: [
-  { label: "House Points", url: "https://forms.gle/YOUR-REAL-LINK" },
-  { label: "Spirit Tally", url: "https://forms.gle/YOUR-REAL-LINK" },
-],
-countdownTo: { label: "Last Day", date: "2026-06-12" },  // update yearly
-```
+Built by **Jason Hicks**, Education Technology Specialist, SOAR Charter Academy.
 
 ---
 
-## ⚠️ Verify these Sheet assumptions
-
-The yard-duty reader was built from a screenshot. The layout is encoded as
-**offsets in `updater/config.py` §4** — fix the numbers there if anything
-doesn't match your real Sheet; no logic to touch.
-
-- Each cycle is its own tab named like **`Cycle 9`**.
-- Inside a tab, weeks sit side-by-side in column pairs (A/B, then D/E, then
-  G/H …) with a one-column gap between. `FIRST_BLOCK_COL=0`, `BLOCK_STRIDE=3`,
-  `NAME_COL_OFFSET=1`.
-- Row 1 of each block is a header like **`Week 1 (May 4th - 8th)`**.
-- Post labels match the keys in `POST_DEFINITIONS` (that's where time/place
-  come from — the Sheet only gives you the name).
-
-If auto-detection misbehaves, set `YARD_DUTY_TAB_OVERRIDE = "Cycle 9"` in
-`config.py` to force a specific tab. Bad creds or no current week → empty duty
-panel + a warning in the run log, never a crash.
-
----
-
-## Seasonal skins
-
-12 skins in `display/themes/themes.css` as `[data-theme="key"]` blocks. The
-display auto-picks one by today's date from `themes.json`. Overlapping windows
-use the `order` priority (halloween beats fall, etc.).
-
-- **Preview any skin:** add `?theme=halloween` to the URL.
-- **Force a skin for a stretch** (spirit week, etc.): set `THEME_OVERRIDE` in
-  `config.py` and re-run the updater.
-- **Add art later:** drop files in `themes/<key>/assets/` and reference them:
-  ```css
-  --bg-image: url("halloween/assets/backdrop.png");
-  --deco-tr:  url("halloween/assets/bats.png");
-  ```
-- The House Cup iframe does **not** follow the skins — intentional; it keeps
-  its own look year-round.
-
----
-
-## The two surprise features
-
-1. **Happening Now / Up Next** — a live banner above the schedule that shows
-   what's on right now and what's next, recomputed every 30 seconds from
-   today's timed events.
-2. **Scan to Log** — QR codes for the House Points and Spirit Tally forms,
-   generated from the URLs in `CONFIG.forms`. Staff scan off the wall to log
-   from their phones. Paste the real form links in `app.js`.
-
-Bonus from the theme system: an optional **ambient particle layer** (snow for
-winter/holidays, leaves for fall, confetti for end-of-year) in `effects.js`.
-Themes opt in via `"effect"` in `themes.json`.
-
----
-
-## Deployment notes
-
-- The display fetches `data/signage.json` relative to itself, so running the
-  updater with its default `SIGNAGE_JSON` path (which writes into `display/data/`)
-  means "run, done, the board picks it up in ~5 minutes."
-- The board never scrolls and uses no browser storage — safe to leave running.
-  It re-reads the JSON every 5 minutes (catches a new weekly run automatically)
-  and re-checks the date/theme every 30 seconds.
-- To run `run_update.command` as a double-click launcher: `chmod +x updater/run_update.command`
+_This board handles only staff-facing scheduling and recognition data. See
+**Privacy & Student-Data Protection** above for how student information is kept
+out of the pipeline entirely._
