@@ -165,7 +165,14 @@ function applyTheme() {
   document.documentElement.setAttribute("data-theme", key);
   $("#seasonLabel").textContent = theme.label || "Staff Board";
 
-  const effect = theme.effect || "none";
+  // Effect only fires inside the theme's optional effect_active window(s),
+  // so colors can persist for weeks while the animation shows for a day or two.
+  let effect = theme.effect || "none";
+  if (effect !== "none" && Array.isArray(theme.effect_active)) {
+    const now = new Date();
+    const mmdd = `${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+    if (!theme.effect_active.some((w) => inWindow(mmdd, w.from, w.to))) effect = "none";
+  }
   if (effect !== STATE.effectFor && window.Effects) {
     STATE.effectFor = effect;
     window.Effects.set(effect);
