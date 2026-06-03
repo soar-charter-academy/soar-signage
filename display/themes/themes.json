@@ -24,31 +24,31 @@
     "testing": {
       "label": "Testing Window — Quiet Please",
       "effect": "none",
-      "active": [{ "from": "04-01", "to": "05-15" }]
+      "active": [{ "from": "05-15", "to": "05-31" }]
     },
     "end-of-year": {
       "label": "End of the Year!",
       "effect": "confetti",
-      "active": [{ "from": "05-20", "to": "06-14" }]
+      "effect_active": [{ "from": "06-10", "to": "06-12" }],
+      "active": [{ "from": "05-31", "to": "06-14" }]
     },
     "summer-school": {
       "label": "Summer School",
       "effect": "none",
-      "active": [{ "from": "06-15", "to": "07-17" }]
+      "active": [{ "from": "06-15", "to": "07-08" }]
     },
     "summer-break": {
       "label": "Summer Break",
       "effect": "none",
-      "active": [{ "from": "07-18", "to": "08-09" }]
+      "active": [{ "from": "07-08", "to": "07-31" }]
     },
     "back-to-school": {
       "label": "Welcome Back!",
       "effect": "none",
-      "active": [{ "from": "08-10", "to": "09-15" }]
+      "active": [{ "from": "07-31", "to": "09-15" }]
     },
     "fall": {
       "label": "Fall",
-      "effect": "leaves",
       "active": [{ "from": "09-16", "to": "11-30" }]
     },
     "halloween": {
@@ -59,22 +59,23 @@
     "thanksgiving": {
       "label": "Happy Thanksgiving",
       "effect": "leaves",
+      "effect_active": [{ "from": "11-16", "to": "11-27" }],
       "active": [{ "from": "11-18", "to": "11-30" }]
     },
     "christmas": {
       "label": "Happy Holidays",
       "effect": "snow",
-      "active": [{ "from": "12-01", "to": "12-26" }]
+      "effect_active": [{ "from": "12-14", "to": "12-26" }],
+      "active": [{ "from": "11-01", "to": "12-26" }]
     },
     "winter": {
       "label": "Winter",
-      "effect": "snow",
-      "active": [{ "from": "12-27", "to": "02-28" }]
+      "active": [{ "from": "12-27", "to": "03-20" }]
     },
     "spring": {
       "label": "Spring",
       "effect": "none",
-      "active": [{ "from": "03-01", "to": "03-31" }]
+      "active": [{ "from": "03-21", "to": "05-15" }]
     }
   }
 }
