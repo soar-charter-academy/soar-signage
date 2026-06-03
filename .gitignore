@@ -13,3 +13,4 @@ display/data/*.tmp
 
 # OS cruft
 .DS_Store
+display/data/signage.*.bak.json

@@ -20,7 +20,7 @@ from __future__ import annotations
 import datetime as dt
 import json
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 import config
 import sanitize
@@ -32,6 +32,7 @@ class BulletinResult:
     week_of: str | None           # ISO date string for the Monday of the week
     sanitize_summary: str         # PII-free description of what was stripped
     warning: str | None = None
+    announcements: list[dict] = field(default_factory=list)  # ticker notices: [{"text": ...}]
 
 
 # The event schema we ask the model to fill. Keeping it here documents the
@@ -112,11 +113,17 @@ def _monday_of(d: dt.date) -> dt.date:
 def _build_prompt(safe_text: str, week_start: dt.date) -> str:
     """The extraction instructions. We pin the week so days resolve to dates."""
     week_end = week_start + dt.timedelta(days=6)
-    return f"""You are extracting calendar events from a school staff bulletin so they
-can be shown on a lobby display. The bulletin covers the week of
-{week_start:%A, %B %-d, %Y} through {week_end:%A, %B %-d, %Y}.
+    return f"""You are reading a school staff bulletin to populate a lobby display.
+The bulletin covers the week of {week_start:%A, %B %-d, %Y} through
+{week_end:%A, %B %-d, %Y}.
 
-Return ONLY a JSON array — no prose, no markdown fences. Each element:
+Return ONLY a JSON object — no prose, no markdown fences:
+{{
+  "events": [ /* dated/scheduled happenings, schema below */ ],
+  "announcements": [ /* short general notices for a scrolling ticker, strings */ ]
+}}
+
+Each EVENT object:
 {{
   "title": "short human label, max ~6 words",
   "date": "YYYY-MM-DD or null",
@@ -128,7 +135,7 @@ Return ONLY a JSON array — no prose, no markdown fences. Each element:
   "audience": "who it's for, or null"
 }}
 
-Rules:
+Event rules:
 - Resolve weekday names to real dates using the week above. Dates with an
   explicit month/day (e.g. "June 9") may fall outside that week — keep them.
 - Split one line into multiple events when it clearly lists several (e.g. an
@@ -139,6 +146,14 @@ Rules:
 - If a time is a range like "11:00-12:30", fill both start and end.
 - Be conservative with category; use "general" when unsure.
 
+ANNOUNCEMENTS are the general notices, reminders, and messages to staff that
+are NOT a specific dated event — the kind of thing that scrolls along a ticker.
+- Each item is a plain string, max ~12 words, lightly cleaned up for display.
+- Examples: "Picture day forms are due Friday", "Please lock classroom doors at dismissal".
+- Do NOT include anyone's name, student information, links, or forms.
+- Do NOT repeat something already captured as an event.
+- If there are none, return an empty array.
+
 BULLETIN TEXT:
 \"\"\"
 {safe_text}
@@ -146,26 +161,32 @@ BULLETIN TEXT:
 """
 
 
-def _coerce_events(raw: str) -> list[dict]:
-    """Parse the model's reply into a list of dicts, tolerating stray fences."""
+def _coerce_payload(raw: str) -> tuple[list[dict], list[dict]]:
+    """Parse the model's reply into (events, announcements), tolerating stray
+    fences and an older array-only shape (treated as events with no notices)."""
     cleaned = raw.strip()
     # Strip ```json … ``` if the model added them despite instructions.
     cleaned = re.sub(r"^```[a-zA-Z]*\s*", "", cleaned)
     cleaned = re.sub(r"\s*```$", "", cleaned)
 
     data = json.loads(cleaned)
-    if not isinstance(data, list):
-        raise ValueError("expected a JSON array of events")
+    if isinstance(data, list):           # legacy: a bare array of events
+        raw_events, raw_notices = data, []
+    elif isinstance(data, dict):
+        raw_events = data.get("events", [])
+        raw_notices = data.get("announcements", [])
+    else:
+        raise ValueError("expected a JSON object with events/announcements")
 
     # Light validation/normalization so the display never sees surprises.
-    out: list[dict] = []
-    for item in data:
+    events: list[dict] = []
+    for item in raw_events:
         if not isinstance(item, dict) or not item.get("title"):
             continue
         category = item.get("category")
         if category not in CATEGORIES:
             category = "general"
-        out.append(
+        events.append(
             {
                 "title": str(item["title"]).strip(),
                 "date": item.get("date"),
@@ -177,7 +198,16 @@ def _coerce_events(raw: str) -> list[dict]:
                 "audience": item.get("audience"),
             }
         )
-    return out
+
+    # Notices come back as plain strings; wrap them in the {"text": ...} shape
+    # the ticker reads, dropping blanks.
+    announcements: list[dict] = []
+    for note in raw_notices:
+        text = (note if isinstance(note, str) else note.get("text", "")).strip()
+        if text:
+            announcements.append({"text": text})
+
+    return events, announcements
 
 
 def parse(docx_path: str) -> BulletinResult:
@@ -209,16 +239,17 @@ def parse(docx_path: str) -> BulletinResult:
         client = anthropic.Anthropic(api_key=config.ANTHROPIC_API_KEY)
         message = client.messages.create(
             model=config.ANTHROPIC_MODEL,
-            max_tokens=2000,
+            max_tokens=8000,
             messages=[{"role": "user", "content": _build_prompt(safe_text, week_start)}],
         )
         reply = "".join(block.text for block in message.content if block.type == "text")
-        events = _coerce_events(reply)
+        events, announcements = _coerce_payload(reply)
     except Exception as exc:
         return BulletinResult([], week_start.isoformat(), summary,
                               f"event extraction failed ({exc})")
 
-    return BulletinResult(events, week_start.isoformat(), summary)
+    return BulletinResult(events, week_start.isoformat(), summary,
+                          announcements=announcements)
 
 
 def _confirm_send(safe_text: str) -> bool:

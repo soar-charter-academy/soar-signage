@@ -23,6 +23,7 @@ from __future__ import annotations
 import datetime as dt
 import json
 import shutil
+import subprocess
 import sys
 from pathlib import Path
 
@@ -115,7 +116,11 @@ def build_payload(bulletin_result, duty_result, announcements: list[dict]) -> di
     "coming up"), so the board stays correct every day of the week without a
     re-run. Theme selection is also the display's job (by date) — we only pass
     an optional manual override.
+
+    Ticker announcements are the bulletin's general notices first, with anything
+    you typed in the box appended to the end.
     """
+    merged_announcements = list(bulletin_result.announcements) + announcements
     return {
         "generated_at": dt.datetime.now().isoformat(timespec="seconds"),
         "week_of": bulletin_result.week_of,
@@ -134,7 +139,7 @@ def build_payload(bulletin_result, duty_result, announcements: list[dict]) -> di
                 for a in duty_result.assignments
             ],
         },
-        "announcements": announcements,
+        "announcements": merged_announcements,
         # A small diagnostics block so the display (and you) can see what
         # happened on the last run without digging through a terminal.
         "diagnostics": {
@@ -165,6 +170,38 @@ def write_json(payload: dict) -> None:
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
+def deploy_to_firebase() -> None:
+    """Publish the freshly written signage.json to the live board via Firebase
+    Hosting. Runs from the repo root (where firebase.json lives). Fails soft —
+    a deploy problem is reported but never crashes the run, and the local
+    signage.json is already saved regardless."""
+    print("\nDeploying to the live board (firebase deploy --only hosting)…")
+    try:
+        result = subprocess.run(
+            ["firebase", "deploy", "--only", "hosting"],
+            cwd=config.REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+    except FileNotFoundError:
+        print("  ⚠  firebase CLI not found — skipped. Install with "
+              "`npm install -g firebase-tools`, or deploy yourself later.")
+        return
+
+    if result.returncode == 0:
+        url = next(
+            (ln.split("Hosting URL:", 1)[1].strip()
+             for ln in result.stdout.splitlines() if "Hosting URL:" in ln),
+            "",
+        )
+        print(f"  ✓ Live{(' → ' + url) if url else ''}.")
+    else:
+        print("  ⚠  Deploy failed — signage.json is saved locally, so nothing is lost.")
+        print("     Retry from the repo root with:  firebase deploy --only hosting")
+        for ln in (result.stderr or result.stdout or "").strip().splitlines()[-6:]:
+            print(f"     {ln}")
+
+
 def main() -> int:
     print("\nSOAR signage updater")
     print("--------------------")
@@ -187,6 +224,7 @@ def main() -> int:
     if bulletin_result.warning:
         print(f"  note:     {bulletin_result.warning}")
     print(f"  events:   {len(bulletin_result.events)} found")
+    print(f"  notices:  {len(bulletin_result.announcements)} pulled for the ticker")
 
     print("\nReading yard duty from the Sheet…")
     duty_result = yard_duty.fetch_current()
@@ -195,15 +233,25 @@ def main() -> int:
     print(f"  on duty:  {len(duty_result.assignments)} assignment(s)"
           f"{f' — {duty_result.week_label}' if duty_result.week_label else ''}")
 
-    print("\nOpening the announcements box…")
+    print("\nOpening the announcements box (these are added on top of the bulletin notices)…")
     announcements = collect_announcements()
-    print(f"  added:    {len(announcements)} announcement(s)")
+    print(f"  added:    {len(announcements)} typed in"
+          f"  →  {len(bulletin_result.announcements) + len(announcements)} on the ticker total")
 
     payload = build_payload(bulletin_result, duty_result, announcements)
     write_json(payload)
 
     print(f"\n✅  Wrote {config.SIGNAGE_JSON}")
     print("    The display will pick it up on its next refresh (no reload needed).")
+
+    # Offer to push it live. Default is yes — just press Enter. Decline if you'd
+    # rather preview locally first (python3 -m http.server in display/).
+    answer = input("\nDeploy to the live board now? [Y/n] ").strip().lower()
+    if answer in ("", "y", "yes"):
+        deploy_to_firebase()
+    else:
+        print("Skipped deploy. When ready, from the repo root:  firebase deploy --only hosting")
+
     print("\nReminder: git commit your changes before you wrap up for the day.")
     return 0
 

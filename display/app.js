@@ -193,7 +193,7 @@ function renderSchedule() {
     const d = parseISODate(e.date);
     if (d == null) { thisWeek.push({ ...e, _date: null }); continue; }
     if (d < today) continue;
-    if (d <= weekEnd) thisWeek.push({ ...e, _date: d });
+    thisWeek.push({ ...e, _date: d });   // today forward; fitSchedule() trims to what fits
   }
 
   const byDay = new Map();
@@ -208,7 +208,7 @@ function renderSchedule() {
     if (b === "anytime") return -1;
     return new Date(a) - new Date(b);
   });
-
+  
   if (dayKeys.length === 0) {
     wrap.appendChild(el("p", "duty__empty", "No events scheduled for the rest of the week."));
     return;
@@ -465,19 +465,34 @@ function renderComingUp() {
 function renderTicker() {
   const wrap = $("#tickerWrap");
   const track = $("#ticker");
+  const viewport = track.parentElement;   // .ticker__viewport
   let items = STATE.signage.announcements || [];
   if (items.length === 0) items = [{ text: CONFIG.tickerFallback || "" }];
   wrap.hidden = false;
 
-  track.innerHTML = "";
-  for (let pass = 0; pass < 2; pass++) {
+  const addPass = () => {
     for (const a of items) {
-      const span = el("span", `ticker__item${a.priority === "high" ? " ticker__item--high" : ""}`, a.text);
-      track.appendChild(span);
+      track.appendChild(
+        el("span", `ticker__item${a.priority === "high" ? " ticker__item--high" : ""}`, a.text)
+      );
     }
-  }
-  const seconds = Math.max(30, items.reduce((n, a) => n + a.text.length, 0) * 0.35);
-  track.style.setProperty("--ticker-duration", `${seconds}s`);
+  };
+
+  // One pass first; scroll (and duplicate for a seamless loop) only if it
+  // overflows the bar. A short single announcement just sits still.
+  track.className = "ticker__track";
+  track.innerHTML = "";
+  addPass();
+  requestAnimationFrame(() => {
+    if (track.scrollWidth > viewport.clientWidth + 4) {
+      addPass();
+      track.classList.add("ticker__track--scroll");
+      const secs = Math.max(20, items.reduce((n, a) => n + a.text.length, 0) * 0.35);
+      track.style.setProperty("--ticker-duration", `${secs}s`);
+    } else {
+      track.style.removeProperty("--ticker-duration");
+    }
+  });
 }
 
 /* ====================== clock + countdown + stamp ====================== */

@@ -210,9 +210,9 @@ body {
 /* ---- Schedule ---- */
 .schedule {
   display: flex; flex-direction: column; gap: 8px;
-  flex: 0 1 auto; min-height: 0; min-width: 0; overflow: hidden;
-  /* Sizes to its content so the bottom row sits right beneath it. If there are
-     more days than fit, the column shrinks this and fitSchedule() clips extras. */
+  flex: 1 1 auto; min-height: 0; min-width: 0; overflow: hidden;
+  /* Grows to fill the space above the fixed-height bottom row; fitSchedule()
+     then clips any day-card that still doesn't fit. */
 }
 .day {
   background: var(--surface); border: 1px solid var(--border);
@@ -300,8 +300,8 @@ body {
 /* ---- Bottom row of the left column: QR grid beside the House Cup ---- */
 .bottomrow {
   display: flex; gap: var(--gap);
-  flex: 1 1 auto;                   /* rises to sit just under the schedule, fills down to the ticker */
-  min-height: clamp(260px, 26vh, 320px);
+  flex: 0 0 auto;                   /* fixed height — takes only this; schedule grows above it */
+  height: clamp(210px, 20vh, 235px);
   min-width: 0;
 }
 /* House Cup — embedded from soarpoints.web.app/display; fills the rest of the row. */
@@ -368,7 +368,7 @@ body {
 }
 .scan__qr {
   background: #fff; padding: 6px; border-radius: 8px; line-height: 0;
-  width: clamp(80px, 7vw, 120px); height: clamp(80px, 7vw, 120px);
+  width: clamp(70px, 5.5vw, 96px); height: clamp(70px, 5.5vw, 96px);
   display: flex; align-items: center; justify-content: center;
 }
 .scan__qr img, .scan__qr canvas { width: 100% !important; height: 100% !important; }
@@ -394,7 +394,11 @@ body {
 }
 .ticker__viewport { overflow: hidden; flex: 1; }
 .ticker__track {
-  display: inline-flex; gap: 48px; white-space: nowrap; padding-left: 100%;
+  display: inline-flex; gap: 48px; white-space: nowrap;
+  padding-left: 16px;   /* small inset when it fits and sits still */
+}
+.ticker__track--scroll {
+  padding-left: 100%;   /* starts off the right edge, then scrolls across */
   animation: ticker var(--ticker-duration, 40s) linear infinite;
 }
 .ticker__item { font-size: clamp(12px, 0.95vw, 17px); padding: 10px 0; color: var(--header-text); }
