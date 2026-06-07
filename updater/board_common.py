@@ -134,8 +134,10 @@ def write_signage(payload: dict) -> None:
 # Email
 # ---------------------------------------------------------------------------
 def send_email(subject: str, body: str) -> None:
-    """Send a plain-text summary via Gmail SMTP. No-op (with a printed note) if
-    email isn't configured, so a missing address can never break a run."""
+    """Send a plain-text summary via Gmail SMTP. BEST-EFFORT: a missing address
+    or a rejected credential prints a note and returns instead of raising, so a
+    notification problem can NEVER crash the run or block the deploy. The board
+    going live matters; the heads-up email does not."""
     recipients = [a.strip() for a in (config.MAIL_TO or "").split(",") if a.strip()]
     if not (config.SMTP_USER and config.SMTP_PASSWORD and recipients):
         print("  (email not configured — skipping send)")
@@ -145,8 +147,11 @@ def send_email(subject: str, body: str) -> None:
     msg["From"] = config.SMTP_USER
     msg["To"] = ", ".join(recipients)
     msg.set_content(body)
-    with smtplib.SMTP(config.SMTP_HOST, config.SMTP_PORT, timeout=30) as smtp:
-        smtp.starttls()
-        smtp.login(config.SMTP_USER, config.SMTP_PASSWORD)
-        smtp.send_message(msg)
-    print(f"  emailed: {', '.join(recipients)}")
+    try:
+        with smtplib.SMTP(config.SMTP_HOST, config.SMTP_PORT, timeout=30) as smtp:
+            smtp.starttls()
+            smtp.login(config.SMTP_USER, config.SMTP_PASSWORD)
+            smtp.send_message(msg)
+        print(f"  emailed: {', '.join(recipients)}")
+    except Exception as exc:
+        print(f"  (email send failed, continuing anyway: {type(exc).__name__}: {exc})")
