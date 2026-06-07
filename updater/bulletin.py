@@ -156,9 +156,27 @@ def list_drive_folder_docs(folder_id: str) -> list[dict]:
     Drive contents (corpora=allDrives can silently return nothing)."""
     session = _drive_session()
 
-    # Resolve the folder itself. This both confirms the SA can see it (a 403 here
-    # means the share didn't actually take) and tells us the Shared Drive id we
-    # need to scope the search.
+    # Diagnostics: announce who we are and which Shared Drives we can actually
+    # see. If the bulletins' drive isn't in this list, the service account isn't
+    # a member of it yet (sharing a folder ≠ drive membership).
+    print(f"  drive: acting as {_service_account_email()}")
+    try:
+        dr = session.get(
+            "https://www.googleapis.com/drive/v3/drives",
+            params={"pageSize": "100", "fields": "drives(id,name)"}, timeout=30,
+        )
+        member_of = dr.json().get("drives", []) if dr.ok else []
+        if member_of:
+            for d in member_of:
+                print(f"    shared-drive member: {d.get('name')!r} ({d.get('id')})")
+        else:
+            print("    shared-drive member: none")
+    except Exception as exc:  # diagnostics must never break the run
+        print(f"    (couldn't list shared drives: {exc})")
+
+    # Resolve the folder itself. This both confirms the SA can see it (a 403/404
+    # here means the share/membership didn't take) and tells us the Shared Drive
+    # id we need to scope the search.
     meta = session.get(
         f"https://www.googleapis.com/drive/v3/files/{folder_id}",
         params={"fields": "id,name,driveId", "supportsAllDrives": "true"},
