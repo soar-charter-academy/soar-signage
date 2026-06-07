@@ -149,24 +149,43 @@ WORD_MIME = "application/vnd.openxmlformats-officedocument.wordprocessingml.docu
 
 
 def list_drive_folder_docs(folder_id: str) -> list[dict]:
-    """List the bulletin files in a folder (Shared Drive aware), newest first.
-    Returns dicts with id, name, modifiedTime, mimeType. Includes BOTH native
-    Google Docs and uploaded Word (.docx) files, since either may be dropped in.
-    corpora=allDrives makes the folder search reach into Shared Drives too."""
+    """List the bulletin files in a folder, newest first. Returns dicts with id,
+    name, modifiedTime, mimeType — both native Google Docs and uploaded Word
+    files. Looks the folder up first so it can detect a Shared Drive and scope
+    the search to that drive by id, which is the reliable way to list Shared
+    Drive contents (corpora=allDrives can silently return nothing)."""
     session = _drive_session()
-    resp = session.get(
-        "https://www.googleapis.com/drive/v3/files",
-        params={
-            "q": (f"'{folder_id}' in parents and trashed=false "
-                  f"and (mimeType='{GDOC_MIME}' or mimeType='{WORD_MIME}')"),
-            "fields": "files(id,name,modifiedTime,mimeType)",
-            "orderBy": "modifiedTime desc",
-            "pageSize": "100",
-            "corpora": "allDrives",
-            "supportsAllDrives": "true",
-            "includeItemsFromAllDrives": "true",
-        },
+
+    # Resolve the folder itself. This both confirms the SA can see it (a 403 here
+    # means the share didn't actually take) and tells us the Shared Drive id we
+    # need to scope the search.
+    meta = session.get(
+        f"https://www.googleapis.com/drive/v3/files/{folder_id}",
+        params={"fields": "id,name,driveId", "supportsAllDrives": "true"},
         timeout=30,
+    )
+    _check_drive_response(meta)
+    info = meta.json()
+    drive_id = info.get("driveId")
+    print(f"  drive: folder {info.get('name', '?')!r}, "
+          f"{'shared drive ' + drive_id if drive_id else 'My Drive'}")
+
+    params = {
+        "q": (f"'{folder_id}' in parents and trashed=false "
+              f"and (mimeType='{GDOC_MIME}' or mimeType='{WORD_MIME}')"),
+        "fields": "files(id,name,modifiedTime,mimeType)",
+        "orderBy": "modifiedTime desc",
+        "pageSize": "100",
+        "supportsAllDrives": "true",
+        "includeItemsFromAllDrives": "true",
+    }
+    if drive_id:
+        # Scope the search to the specific Shared Drive — the reliable path.
+        params["corpora"] = "drive"
+        params["driveId"] = drive_id
+
+    resp = session.get(
+        "https://www.googleapis.com/drive/v3/files", params=params, timeout=30,
     )
     _check_drive_response(resp)
     return resp.json().get("files", [])
