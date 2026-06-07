@@ -33,6 +33,19 @@ jobs:
       - name: Install dependencies
         run: pip install -r updater/requirements.txt
 
+      - name: Probe Anthropic API reachability
+        run: |
+          echo "default route:"
+          curl -sS -m 15 -o /dev/null -w "  HTTP %{http_code}\n" \
+            -X POST https://api.anthropic.com/v1/messages \
+            -H "content-type: application/json" -d "{}" \
+            || echo "  FAILED to connect (default route)"
+          echo "forced IPv4:"
+          curl -4 -sS -m 15 -o /dev/null -w "  HTTP %{http_code}\n" \
+            -X POST https://api.anthropic.com/v1/messages \
+            -H "content-type: application/json" -d "{}" \
+            || echo "  FAILED to connect (IPv4)"
+
       - name: Write the service-account key to a temp file
         env:
           SA_KEY: ${{ secrets.GOOGLE_SA_KEY }}

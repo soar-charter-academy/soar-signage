@@ -439,7 +439,7 @@ def extract_events_notices(
     except ImportError:
         return [], [], "anthropic SDK not installed — skipped event extraction"
     try:
-        client = anthropic.Anthropic(api_key=config.ANTHROPIC_API_KEY)
+        client = anthropic.Anthropic(api_key=config.ANTHROPIC_API_KEY, max_retries=4)
         message = client.messages.create(
             model=config.ANTHROPIC_MODEL,
             max_tokens=8000,
@@ -449,7 +449,13 @@ def extract_events_notices(
         events, announcements = _coerce_payload(reply)
         return events, announcements, None
     except Exception as exc:
-        return [], [], f"event extraction failed ({exc})"
+        # Surface the real cause — "Connection error." alone hides whether it was
+        # a timeout, DNS, TLS, or a blocked egress.
+        detail = f"{type(exc).__name__}: {exc}"
+        cause = getattr(exc, "__cause__", None)
+        if cause is not None:
+            detail += f" (cause: {type(cause).__name__}: {cause})"
+        return [], [], f"event extraction failed — {detail}"
 
 
 def _confirm_send(safe_text: str) -> bool:
