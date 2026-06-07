@@ -130,6 +130,12 @@ def main() -> int:
 
         # ---- 1) which file should be showing today? -------------------------
         files = bulletin.list_drive_folder_docs(config.BULLETIN_FOLDER_ID)
+        print(f"  folder: {len(files)} file(s) found")
+        for f in files:
+            mt = f.get("mimeType", "")
+            kind = ("Google Doc" if mt == bulletin.GDOC_MIME
+                    else "Word" if mt == bulletin.WORD_MIME else mt)
+            print(f"    - {f.get('name')!r}  [{kind}]")
         current, notes, n_parseable = pick_current_file(files, today)
         for n in notes:
             print(f"  {n}")
@@ -154,7 +160,7 @@ def main() -> int:
         print(f"  current file: {current['name']} ({current['id']})")
 
         # ---- 2) has the bulletin changed since we last built the board? -----
-        text = bulletin.export_doc_text(current["id"])
+        text = bulletin.fetch_drive_file_text(current)
         content_hash = hashlib.sha256(text.encode("utf-8")).hexdigest()
         new_file = current["id"] != last.get("file_id")
         bulletin_changed = new_file or content_hash != last.get("content_hash")

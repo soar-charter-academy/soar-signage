@@ -48,18 +48,18 @@ class BulletinResult:
 CATEGORIES = ["celebration", "meeting", "deadline", "trip", "food", "sports", "general"]
 
 
-def extract_text(docx_path: str) -> str:
+def extract_text(source) -> str:
     """
     Read a .docx into plain text, including tables (the yard-duty grid is a
     table, and so are some announcements). python-docx exposes paragraphs and
-    tables separately, so we walk both.
-    """
+    tables separately, so we walk both. `source` may be a file path or an
+    in-memory binary stream (e.g. a BytesIO of a downloaded file)."""
     try:
         import docx  # python-docx
     except ImportError as exc:
         raise RuntimeError("python-docx not installed — run pip install python-docx") from exc
 
-    document = docx.Document(docx_path)
+    document = docx.Document(source)
     chunks: list[str] = []
 
     for para in document.paragraphs:
@@ -141,19 +141,28 @@ def export_doc_text(doc_id: str) -> str:
     return resp.text
 
 
+# Bulletin files come in two shapes: a native Google Doc, or an uploaded Word
+# file. Modern Drive does NOT auto-convert uploads, so a .docx stays a .docx —
+# we have to look for, and read, both.
+GDOC_MIME = "application/vnd.google-apps.document"
+WORD_MIME = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+
+
 def list_drive_folder_docs(folder_id: str) -> list[dict]:
-    """List the Google Docs in a folder (Shared Drive aware), newest first.
-    Returns dicts with id, name, modifiedTime. Uploaded .docx files auto-convert
-    to Docs, so filtering to the Doc mimeType catches everything she drops in."""
+    """List the bulletin files in a folder (Shared Drive aware), newest first.
+    Returns dicts with id, name, modifiedTime, mimeType. Includes BOTH native
+    Google Docs and uploaded Word (.docx) files, since either may be dropped in.
+    corpora=allDrives makes the folder search reach into Shared Drives too."""
     session = _drive_session()
     resp = session.get(
         "https://www.googleapis.com/drive/v3/files",
         params={
             "q": (f"'{folder_id}' in parents and trashed=false "
-                  "and mimeType='application/vnd.google-apps.document'"),
-            "fields": "files(id,name,modifiedTime)",
+                  f"and (mimeType='{GDOC_MIME}' or mimeType='{WORD_MIME}')"),
+            "fields": "files(id,name,modifiedTime,mimeType)",
             "orderBy": "modifiedTime desc",
             "pageSize": "100",
+            "corpora": "allDrives",
             "supportsAllDrives": "true",
             "includeItemsFromAllDrives": "true",
         },
@@ -161,6 +170,29 @@ def list_drive_folder_docs(folder_id: str) -> list[dict]:
     )
     _check_drive_response(resp)
     return resp.json().get("files", [])
+
+
+def fetch_drive_file_text(file: dict) -> str:
+    """Plain text from a Drive file dict (needs id + mimeType): export a Google
+    Doc, or download + extract an uploaded Word file."""
+    mime = file.get("mimeType", "")
+    if mime == GDOC_MIME:
+        return export_doc_text(file["id"])
+    if mime == WORD_MIME:
+        return _download_docx_text(file["id"])
+    raise RuntimeError(f"Unsupported bulletin file type ({mime or 'unknown'}).")
+
+
+def _download_docx_text(file_id: str) -> str:
+    """Download an uploaded .docx (alt=media) and extract its text in-memory."""
+    import io
+    session = _drive_session()
+    resp = session.get(
+        f"https://www.googleapis.com/drive/v3/files/{file_id}",
+        params={"alt": "media", "supportsAllDrives": "true"}, timeout=30,
+    )
+    _check_drive_response(resp)
+    return extract_text(io.BytesIO(resp.content))
 
 
 def fetch_google_doc(url: str) -> tuple[str, str]:
