@@ -200,3 +200,42 @@ POST_DEFINITIONS = {
 # The display honors it until you set it back to None.
 # Valid values are any theme key in display/themes/themes.json.
 THEME_OVERRIDE: str | None = None
+
+
+# ---------------------------------------------------------------------------
+# 7. AUTONOMOUS NIGHTLY SYNC  (sync_bulletin.py — the human-out-of-the-loop run)
+# ---------------------------------------------------------------------------
+# sync_bulletin.py watches a Shared Drive folder, promotes the right week's
+# bulletin on schedule, pushes mid-week edits, and emails a summary. It uses the
+# same read-only service account as the duty Sheet (just with Drive scope too).
+
+# The Shared Drive folder the weekly bulletin Docs are dropped into — the folder
+# ID from its URL: drive.google.com/drive/folders/<THIS PART>
+# She makes a NEW folder each year, so update this when the new one shows up.
+BULLETIN_FOLDER_ID = "1wQNL51PclA84N7CljoKHh9LUCwG4H58e"
+
+# How many days BEFORE a bulletin's week (its Monday) it may go live. 2 = it
+# takes over on the Saturday before, so the current week's duty and "now" stay
+# up through Friday. Lower it to hold the current week even longer.
+BULLETIN_LEAD_DAYS = 2
+
+# The live board URL the nightly job reads to see what's currently showing, so
+# it only redeploys/emails on a real change. The deployed file's own diagnostics
+# carry the "last processed" state — no separate state file to keep in sync.
+LIVE_SIGNAGE_URL = "https://soar-signage.web.app/data/signage.json"
+
+# Firebase project to deploy to (used by the local scripts; CI passes its own).
+FIREBASE_PROJECT = "soar-signage"
+
+# Mid-week manual additions live here. Every build merges these in (dropping
+# expired ones), so they survive the nightly overwrite.
+MANUAL_OVERLAY = REPO_ROOT / "updater" / "manual.json"
+
+# Email summary settings (sent by the nightly job). Read from the environment so
+# the same code works locally (.env) and in CI (GitHub secrets). MAIL_TO may be
+# a comma-separated list. Gmail SMTP + an app password.
+SMTP_HOST = "smtp.gmail.com"
+SMTP_PORT = 587
+SMTP_USER = os.environ.get("SMTP_USER", "")
+SMTP_PASSWORD = os.environ.get("SMTP_PASSWORD", "")
+MAIL_TO = os.environ.get("MAIL_TO", "")

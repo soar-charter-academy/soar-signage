@@ -77,33 +77,155 @@ def extract_text(docx_path: str) -> str:
     return "\n".join(chunks)
 
 
-def week_of_from_filename(docx_path: str, fallback: dt.date | None = None) -> dt.date:
-    """
-    The files are named like "Week of June 1.docx", so the date is right there.
-    Parse it; fall back to (this) Monday if the name doesn't cooperate.
-    """
-    fallback = fallback or _monday_of(dt.date.today())
-    name = re.sub(r"\.docx$", "", docx_path.split("/")[-1], flags=re.IGNORECASE)
+# ---- Google Doc source -----------------------------------------------------
+# Instead of a downloaded .docx, the bulletin can be pulled straight from a
+# Google Doc link. We export it to plain text via the Drive API using the SAME
+# service account that reads the yard-duty Sheet — so the doc stays private
+# (shared only with that service account), never made link-public. The bulletin
+# still contains student data, so this MUST stay a private, authenticated fetch.
+_GDOC_ID_RE = re.compile(r"/document/d/([a-zA-Z0-9_-]+)")
+_BARE_ID_RE = re.compile(r"^[a-zA-Z0-9_-]{20,}$")
 
+
+def _extract_doc_id(url: str) -> str | None:
+    url = (url or "").strip()
+    m = _GDOC_ID_RE.search(url)
+    if m:
+        return m.group(1)
+    return url if _BARE_ID_RE.match(url) else None  # they may have pasted a bare ID
+
+
+def _service_account_email() -> str:
+    try:
+        with open(config.GOOGLE_SERVICE_ACCOUNT_FILE) as fh:
+            return json.load(fh).get("client_email", "the service account")
+    except Exception:
+        return "the service account"
+
+
+def _drive_session():
+    """An authorized requests session for the Drive API, reusing the Sheet's
+    service account (read-only scope)."""
+    from google.oauth2 import service_account
+    from google.auth.transport.requests import AuthorizedSession
+
+    creds = service_account.Credentials.from_service_account_file(
+        config.GOOGLE_SERVICE_ACCOUNT_FILE,
+        scopes=["https://www.googleapis.com/auth/drive.readonly"],
+    )
+    return AuthorizedSession(creds)
+
+
+def _check_drive_response(resp) -> None:
+    """Turn Drive's auth/permission errors into messages that say what to fix."""
+    if resp.status_code == 404:
+        raise RuntimeError("Not found — double-check the link or folder ID.")
+    if resp.status_code == 403:
+        raise RuntimeError(
+            f"Access denied. Share the doc/folder with {_service_account_email()} "
+            "as Viewer, and make sure the Drive API is enabled for the project."
+        )
+    resp.raise_for_status()
+
+
+def export_doc_text(doc_id: str) -> str:
+    """Export a Google Doc (by ID) to plain text. supportsAllDrives so it works
+    for files living in a Shared Drive."""
+    session = _drive_session()
+    resp = session.get(
+        f"https://www.googleapis.com/drive/v3/files/{doc_id}/export",
+        params={"mimeType": "text/plain", "supportsAllDrives": "true"}, timeout=30,
+    )
+    _check_drive_response(resp)
+    resp.encoding = "utf-8"
+    return resp.text
+
+
+def list_drive_folder_docs(folder_id: str) -> list[dict]:
+    """List the Google Docs in a folder (Shared Drive aware), newest first.
+    Returns dicts with id, name, modifiedTime. Uploaded .docx files auto-convert
+    to Docs, so filtering to the Doc mimeType catches everything she drops in."""
+    session = _drive_session()
+    resp = session.get(
+        "https://www.googleapis.com/drive/v3/files",
+        params={
+            "q": (f"'{folder_id}' in parents and trashed=false "
+                  "and mimeType='application/vnd.google-apps.document'"),
+            "fields": "files(id,name,modifiedTime)",
+            "orderBy": "modifiedTime desc",
+            "pageSize": "100",
+            "supportsAllDrives": "true",
+            "includeItemsFromAllDrives": "true",
+        },
+        timeout=30,
+    )
+    _check_drive_response(resp)
+    return resp.json().get("files", [])
+
+
+def fetch_google_doc(url: str) -> tuple[str, str]:
+    """Export a Google Doc to plain text via the Drive API. Returns (title, text).
+    The doc (or a folder it lives in) must be shared with the service account as
+    Viewer, and the Drive API must be enabled for the project."""
+    doc_id = _extract_doc_id(url)
+    if not doc_id:
+        raise RuntimeError("Couldn't find a Google Doc ID in that link — paste the full /document/d/… URL.")
+
+    session = _drive_session()
+    meta = session.get(
+        f"https://www.googleapis.com/drive/v3/files/{doc_id}",
+        params={"fields": "name,mimeType", "supportsAllDrives": "true"}, timeout=30,
+    )
+    _check_drive_response(meta)
+    info = meta.json()
+    if info.get("mimeType") != "application/vnd.google-apps.document":
+        raise RuntimeError("That link isn't a Google Doc — only Docs export to text this way.")
+
+    return info.get("name", ""), export_doc_text(doc_id)
+
+
+_MONTHS = {
+    "jan": 1, "feb": 2, "mar": 3, "apr": 4, "may": 5, "jun": 6,
+    "jul": 7, "aug": 8, "sep": 9, "oct": 10, "nov": 11, "dec": 12,
+}
+
+
+def _week_from_string(s: str | None, numeric_ok: bool = False) -> dt.date | None:
+    """Pull a date out of a string and return it (current year if no year given),
+    or None. Always recognizes a written month + day ('June 1', 'Week of Jun 1',
+    'May 4-8'). With numeric_ok=True it ALSO accepts 'M/D', 'M-D', 'M/D/YY',
+    'M/D/YYYY' — use that for filenames/Doc titles, but NOT for scanning body
+    text, where '3/4' is more likely a fraction than a date."""
+    text = s or ""
     m = re.search(
         r"(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\w*\s+(\d{1,2})",
-        name,
-        re.IGNORECASE,
+        text, re.IGNORECASE,
     )
-    if not m:
-        return fallback
+    if m:
+        try:
+            return dt.date(dt.date.today().year, _MONTHS[m.group(1).lower()[:3]], int(m.group(2)))
+        except ValueError:
+            return None
 
-    months = {
-        "jan": 1, "feb": 2, "mar": 3, "apr": 4, "may": 5, "jun": 6,
-        "jul": 7, "aug": 8, "sep": 9, "oct": 10, "nov": 11, "dec": 12,
-    }
-    month = months[m.group(1).lower()[:3]]
-    day = int(m.group(2))
-    year = dt.date.today().year
-    try:
-        return dt.date(year, month, day)
-    except ValueError:
-        return fallback
+    if numeric_ok:
+        m = re.search(r"\b(\d{1,2})[/-](\d{1,2})(?:[/-](\d{2,4}))?\b", text)
+        if m:
+            month, day = int(m.group(1)), int(m.group(2))
+            year = int(m.group(3)) if m.group(3) else dt.date.today().year
+            if year < 100:
+                year += 2000
+            try:
+                return dt.date(year, month, day)
+            except ValueError:
+                return None
+    return None
+
+
+def week_of_from_filename(docx_path: str, fallback: dt.date | None = None) -> dt.date:
+    """The files are named like "Week of June 1.docx", so the date is right
+    there. Fall back to (this) Monday if the name doesn't cooperate."""
+    name = re.sub(r"\.docx$", "", docx_path.split("/")[-1], flags=re.IGNORECASE)
+    return _week_from_string(name, numeric_ok=True) or fallback or _monday_of(dt.date.today())
 
 
 def _monday_of(d: dt.date) -> dt.date:
@@ -210,31 +332,43 @@ def _coerce_payload(raw: str) -> tuple[list[dict], list[dict]]:
     return events, announcements
 
 
-def parse(docx_path: str) -> BulletinResult:
-    """Main entry point. Extract → sanitize → (confirm) → API → events."""
-    week_start = week_of_from_filename(docx_path)
+def parse(raw_text: str, week_hint: str | None = None) -> BulletinResult:
+    """Shared pipeline: derive week → sanitize → (confirm) → API → events/notices.
 
-    raw_text = extract_text(docx_path)
+    `raw_text` is the bulletin's plain text, from either a .docx (extract_text)
+    or a Google Doc (fetch_google_doc). `week_hint` is the filename or doc title
+    — that's where "Week of <date>" usually lives; we fall back to scanning the
+    text, then to this Monday."""
+    week_start = (_week_from_string(week_hint)
+                  or _week_from_string((raw_text or "")[:600])
+                  or _monday_of(dt.date.today()))
+
     safe_text, report = sanitize.sanitize_bulletin_text(raw_text)
     summary = report.summary()
 
-    # The human confirmation gate. This is the real guarantee.
+    # The human confirmation gate — the real guarantee for interactive runs.
     if config.REQUIRE_SEND_CONFIRMATION:
-        ok = _confirm_send(safe_text)
-        if not ok:
+        if not _confirm_send(safe_text):
             return BulletinResult([], week_start.isoformat(), summary,
                                   "send not confirmed — skipped API event extraction")
 
-    if not config.ANTHROPIC_API_KEY:
-        return BulletinResult([], week_start.isoformat(), summary,
-                              "no ANTHROPIC_API_KEY — skipped event extraction")
+    events, announcements, warning = extract_events_notices(safe_text, week_start)
+    return BulletinResult(events, week_start.isoformat(), summary, warning, announcements)
 
+
+def extract_events_notices(
+    safe_text: str, week_start: dt.date
+) -> tuple[list[dict], list[dict], str | None]:
+    """API call → (events, announcements, warning). Assumes safe_text is ALREADY
+    sanitized — the autonomous job sanitizes and runs its fail-safe first, then
+    calls this. Returns empties + a warning string on any failure instead of
+    raising, so the caller can choose NOT to blank the board on a hiccup."""
+    if not config.ANTHROPIC_API_KEY:
+        return [], [], "no ANTHROPIC_API_KEY — skipped event extraction"
     try:
         import anthropic
     except ImportError:
-        return BulletinResult([], week_start.isoformat(), summary,
-                              "anthropic SDK not installed — skipped event extraction")
-
+        return [], [], "anthropic SDK not installed — skipped event extraction"
     try:
         client = anthropic.Anthropic(api_key=config.ANTHROPIC_API_KEY)
         message = client.messages.create(
@@ -244,12 +378,9 @@ def parse(docx_path: str) -> BulletinResult:
         )
         reply = "".join(block.text for block in message.content if block.type == "text")
         events, announcements = _coerce_payload(reply)
+        return events, announcements, None
     except Exception as exc:
-        return BulletinResult([], week_start.isoformat(), summary,
-                              f"event extraction failed ({exc})")
-
-    return BulletinResult(events, week_start.isoformat(), summary,
-                          announcements=announcements)
+        return [], [], f"event extraction failed ({exc})"
 
 
 def _confirm_send(safe_text: str) -> bool:
