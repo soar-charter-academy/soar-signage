@@ -266,7 +266,7 @@ function fitSchedule(wrap) {
   let used = 0;
   for (let i = 0; i < cards.length; i++) {
     used += (i > 0 ? gap : 0) + cards[i].offsetHeight;
-    if (used > maxH + 2) {   // tolerance: avoids sub-pixel false-clips when content-sized
+    if (used > maxH) {
       cards.slice(i === 0 ? 1 : i).forEach((c) => c.remove());
       break;
     }
