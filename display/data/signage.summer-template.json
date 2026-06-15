@@ -1,0 +1,15 @@
+{
+  "_README": "Next summer, copy this over data/signage.json and fill in. Keep theme_override summer-break. Events/announcements show; empty arrays render clean 'nothing scheduled' states. Dates are ISO YYYY-MM-DD; category is one of celebration|meeting|deadline|trip|food|sports|general.",
+  "generated_at": "2027-06-15T09:00:00",
+  "week_of": "2027-06-15",
+  "theme_override": "summer-break",
+  "events": [
+    { "_example": true, "title": "Summer School Session 1 Begins", "date": "2027-06-21", "day": "Monday", "start": "08:00", "end": null, "location": "Rooms 12-15", "category": "general", "audience": "Summer school students" }
+  ],
+  "yard_duty": { "week_label": "", "assignments": [] },
+  "announcements": [
+    { "text": "Have a wonderful summer, SOAR staff — see you in August!", "priority": "high" },
+    { "_example": true, "text": "Front office open 8a-2p, Monday-Thursday.", "priority": "normal" }
+  ],
+  "diagnostics": { "sanitize": "summer mode — no bulletin processed", "bulletin_warning": null, "yard_duty_warning": null }
+}

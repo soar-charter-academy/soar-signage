@@ -65,53 +65,24 @@
 }
 
 /* ---- SUMMER BREAK ----------------------------------------------------------
-   LIGHT skin — full tropical. Sunrise-over-the-ocean: warm sand field, deep
-   teal header band, white panels with seafoam edges, coral "now" + mango hero.
-   Pure-CSS sun/sand wash and inline-SVG corner flourishes (palm, sun, wave,
-   pineapple) — zero asset files. Vacation mode, but still legible wall-side. */
+   LIGHT skin. Sky + sand + coral, playful script display. Vacation mode. ---- */
 [data-theme="summer-break"] {
-  --bg:        #fff4dd;   /* warm sand field */
-  --bg-2:      #ffe2a8;   /* golden sunlight glow */
-  --surface:   #ffffff;   /* clean white panels */
-  --surface-2: #eafaf6;   /* palest aqua rows */
-  --border:    #8fd9cf;   /* soft seafoam hairline */
-  --text:      #0f3a44;   /* deep teal-slate text */
-  --text-dim:  #5b8a8f;   /* muted teal-grey */
-  --accent:    #0aa6c2;   /* bright lagoon teal */
-  --accent-2:  #14c8b0;   /* aqua-mint */
-  --today:     #ff5a4d;   /* coral / sunset pop */
-  --accent-gold: #ffb22e; /* mango sunshine — hero */
-  --good:      #1fb574;
-  --bad:       #ff6b6b;
-  --header-bg: #0c6e7d;   /* deep tropical-ocean teal band */
-  --header-text: #ffffff;
-  --on-gold:   #5a3000;   /* warm brown text on mango fills */
-  --shadow:    0 8px 22px rgba(12, 110, 125, 0.18);
+  --bg:        #bfe9ff;
+  --bg-2:      #e8f7ff;
+  --surface:   #ffffff;
+  --surface-2: #eaf6ff;
+  --border:    #bcdcec;
+  --text:      #103645;
+  --text-dim:  #5c8295;
+  --accent:    #ff7a59;   /* coral */
+  --accent-2:  #1fb6d6;   /* sea */
+  --today:     #ffb01f;   /* sunshine */
+  --good:      #1fae6a;
+  --bad:       #e8543f;
+  --header-bg: #0e8bb0;   /* deep sea band so the white header text reads */
+  --shadow:    0 14px 34px rgba(28, 90, 120, 0.18);
   --font-display: "Pacifico", cursive;
   --display-tracking: 0;
-
-  /* fruit-stand category dots, tuned to pop on white panels */
-  --cat-celebration: #ff6fb5;
-  --cat-meeting:     #2bb3d4;
-  --cat-deadline:    #ff8a3d;
-  --cat-trip:        #18c08a;
-  --cat-food:        #ffb22e;
-  --cat-sports:      #36c5e8;
-  --cat-general:     #7fa7ad;
-
-  /* sunrise wash painted under everything (sits behind --bg) */
-  --bg-image:
-    radial-gradient(ellipse 90% 55% at 85% -10%, rgba(255, 178, 46, 0.35), transparent 60%),
-    radial-gradient(ellipse 80% 50% at 0% 110%, rgba(20, 200, 176, 0.22), transparent 55%),
-    linear-gradient(180deg, #d8f3ff 0%, #fff4dd 45%);
-
-  /* corner flourishes — inline SVG data-URIs, low-contrast so they decorate
-     without fighting the content. sun TR · palm TL · wave BL · pineapple BR */
-  --deco-size: 210px;
-  --deco-tr: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><g fill="none" stroke="%23ffb22e" stroke-width="7" stroke-linecap="round" opacity="0.55"><circle cx="150" cy="50" r="30" fill="%23ffd87a" stroke="none"/><line x1="150" y1="2" x2="150" y2="13"/><line x1="150" y1="87" x2="150" y2="98"/><line x1="102" y1="50" x2="113" y2="50"/><line x1="187" y1="50" x2="198" y2="50"/><line x1="115" y1="15" x2="123" y2="23"/><line x1="177" y1="77" x2="185" y2="85"/><line x1="185" y1="15" x2="177" y2="23"/><line x1="123" y1="77" x2="115" y2="85"/></g></svg>');
-  --deco-tl: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><g fill="%2318c08a" opacity="0.38"><path d="M22 22 Q72 37 97 82 Q62 57 32 62 Q57 52 22 22Z"/><path d="M22 22 Q42 72 37 122 Q27 77 7 67 Q32 62 22 22Z"/><path d="M22 22 Q77 27 122 42 Q82 32 62 47 Q57 27 22 22Z"/></g></svg>');
-  --deco-bl: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><g fill="none" stroke="%230aa6c2" stroke-width="6" stroke-linecap="round" opacity="0.40"><path d="M2 152 Q27 132 52 152 T102 152 T152 152"/><path d="M2 172 Q27 152 52 172 T102 172 T152 172"/></g></svg>');
-  --deco-br: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><g opacity="0.42"><path d="M150 96 Q135 81 150 61 Q165 81 150 96Z" fill="%2318c08a"/><path d="M150 96 Q133 83 128 71 Q150 79 150 96Z" fill="%2318c08a"/><path d="M150 96 Q167 83 172 71 Q150 79 150 96Z" fill="%2318c08a"/><ellipse cx="150" cy="136" rx="28" ry="40" fill="%23ffb22e"/><g stroke="%23c97e1a" stroke-width="2.5" opacity="0.65"><line x1="130" y1="111" x2="170" y2="151"/><line x1="170" y1="111" x2="130" y2="151"/><line x1="124" y1="136" x2="176" y2="136"/></g></g></svg>');
 }
 
 /* ---- BACK TO SCHOOL --------------------------------------------------------

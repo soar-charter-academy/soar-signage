@@ -1,0 +1,72 @@
+name: Nightly signage sync
+
+# Runs overnight, promotes the right week's bulletin, pushes mid-week edits, and
+# deploys ONLY when the board would actually change. You can also trigger it by
+# hand from the Actions tab (workflow_dispatch) to test or force a refresh.
+
+on:
+  schedule:
+    # 09:00 UTC ≈ 1–2am Pacific. GitHub cron is UTC and ignores DST, so this
+    # drifts by an hour across the year — irrelevant in the middle of the night.
+    - cron: "0 9 * * *"
+  workflow_dispatch: {}
+
+# The job reads the repo and deploys hosting; it never commits, so read is enough.
+permissions:
+  contents: read
+
+# Don't let two runs (e.g. a manual trigger during the scheduled one) overlap.
+concurrency:
+  group: signage-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r updater/requirements.txt
+
+      - name: Probe Anthropic API reachability
+        run: |
+          echo "default route:"
+          curl -sS -m 15 -o /dev/null -w "  HTTP %{http_code}\n" \
+            -X POST https://api.anthropic.com/v1/messages \
+            -H "content-type: application/json" -d "{}" \
+            || echo "  FAILED to connect (default route)"
+          echo "forced IPv4:"
+          curl -4 -sS -m 15 -o /dev/null -w "  HTTP %{http_code}\n" \
+            -X POST https://api.anthropic.com/v1/messages \
+            -H "content-type: application/json" -d "{}" \
+            || echo "  FAILED to connect (IPv4)"
+
+      - name: Write the service-account key to a temp file
+        env:
+          SA_KEY: ${{ secrets.GOOGLE_SA_KEY }}
+        run: printf '%s' "$SA_KEY" > "$RUNNER_TEMP/sa.json"
+
+      - name: Sync the board
+        id: sync
+        working-directory: updater
+        env:
+          GOOGLE_SERVICE_ACCOUNT_FILE: ${{ runner.temp }}/sa.json
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          MAIL_TO: ${{ secrets.MAIL_TO }}
+        run: python sync_bulletin.py
+
+      - name: Deploy to Firebase Hosting
+        if: steps.sync.outputs.changed == 'true'
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          projectId: soar-signage
+          channelId: live

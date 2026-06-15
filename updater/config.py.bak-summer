@@ -199,7 +199,7 @@ POST_DEFINITIONS = {
 # week, or preview "christmas"), set it here and it gets written into the JSON.
 # The display honors it until you set it back to None.
 # Valid values are any theme key in display/themes/themes.json.
-THEME_OVERRIDE: str | None = "summer-break"
+THEME_OVERRIDE: str | None = None
 
 
 # ---------------------------------------------------------------------------
