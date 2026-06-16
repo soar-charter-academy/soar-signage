@@ -121,6 +121,18 @@ def main() -> int:
     today = dt.date.today()
     print(f"sync_bulletin — {dt.datetime.now().isoformat(timespec='seconds')}")
 
+    # SEASONAL GATE — when THEME_OVERRIDE is a no-bulletin season, skip the
+    # entire sync. Without this, a forgotten cron or a manual "Run workflow"
+    # click silently overwrites curated summer/back-to-school content with
+    # whatever's in the bulletin folder. Cosmetic-only THEME_OVERRIDE caused
+    # exactly that on 2026-06-15/16 — this makes the override load-bearing.
+    NO_SYNC_THEMES = {"summer-break", "summer-school", "back-to-school"}
+    if config.THEME_OVERRIDE in NO_SYNC_THEMES:
+        print(f"  THEME_OVERRIDE = {config.THEME_OVERRIDE!r} — seasonal mode, "
+              "skipping sync entirely. Board left untouched.")
+        _set_output("changed", "false")
+        return 0
+
     try:
         # ---- what's showing now (and the state we stored last time) ----------
         live = fetch_live_signage()

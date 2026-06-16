@@ -8,7 +8,7 @@ on:
   schedule:
     # 09:00 UTC ≈ 1–2am Pacific. GitHub cron is UTC and ignores DST, so this
     # drifts by an hour across the year — irrelevant in the middle of the night.
-    - cron: "0 9 * * *"
+    # - cron: "0 9 * * *"
   workflow_dispatch: {}
 
 # The job reads the repo and deploys hosting; it never commits, so read is enough.
