@@ -1,18 +1,36 @@
+cat << 'EOF'
 {
-  "generated_at": "2026-06-15T09:00:00",
+  "generated_at": "2026-06-16T09:00:00",
   "week_of": "2026-06-15",
   "theme_override": "summer-break",
   "events": [],
-  "yard_duty": {
-    "week_label": "",
-    "assignments": []
-  },
+  "yard_duty": { "week_label": "", "assignments": [] },
   "announcements": [
     { "text": "Have a wonderful summer, SOAR staff — see you in August! \u2600", "priority": "high" }
   ],
   "diagnostics": {
     "sanitize": "summer mode — no bulletin processed",
     "bulletin_warning": null,
-    "yard_duty_warning": null
+    "yard_duty_warning": null,
+    "synced_by": "manual-summer-restore"
+  }
+}
+EOF
+Output
+
+{
+  "generated_at": "2026-06-16T09:00:00",
+  "week_of": "2026-06-15",
+  "theme_override": "summer-break",
+  "events": [],
+  "yard_duty": { "week_label": "", "assignments": [] },
+  "announcements": [
+    { "text": "Have a wonderful summer, SOAR staff — see you in August! \u2600", "priority": "high" }
+  ],
+  "diagnostics": {
+    "sanitize": "summer mode — no bulletin processed",
+    "bulletin_warning": null,
+    "yard_duty_warning": null,
+    "synced_by": "manual-summer-restore"
   }
 }
