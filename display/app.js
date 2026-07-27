@@ -27,8 +27,8 @@ const CONFIG = {
   // codes staff can scan off the wall to log from their phone.
   // url: null + placeholder: true → renders an empty dashed "reserved" tile.
   forms: [
-    { label: "House Points", url: "https://soarpoints.web.app" },
-    { label: "Work Order",   url: "https://docs.google.com/forms/d/e/1FAIpQLSecmNhWMgJS66Z0pOvKgm3SN59iCmgd9UVe6YIE7558d-9H_g/viewform" },
+    { label: "House Points",       url: "https://soarpoints.web.app" },
+    { label: "Technology Ticket",  url: "https://soarcharter.zohodesk.com/portal },
   ],
 
   // ---- Countdown chip (top-right). Set to null to hide. ----
