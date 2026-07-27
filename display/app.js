@@ -27,7 +27,7 @@ const CONFIG = {
   // codes staff can scan off the wall to log from their phone.
   // url: null + placeholder: true → renders an empty dashed "reserved" tile.
   forms: [
-    { label: "House Points",       url: "https://soarpoints.web.app" },
+    { label: "House Points", url: "https://soarpoints.web.app" },
     { label: "Technology Ticket",  url: "https://soarcharter.zohodesk.com/portal/" },
   ],
 
