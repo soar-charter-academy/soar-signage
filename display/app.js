@@ -28,7 +28,7 @@ const CONFIG = {
   // url: null + placeholder: true → renders an empty dashed "reserved" tile.
   forms: [
     { label: "House Points",       url: "https://soarpoints.web.app" },
-    { label: "Technology Ticket",  url: "https://soarcharter.zohodesk.com/portal },
+    { label: "Technology Ticket",  url: "https://soarcharter.zohodesk.com/portal/" },
   ],
 
   // ---- Countdown chip (top-right). Set to null to hide. ----
