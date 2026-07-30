@@ -239,3 +239,4 @@ Built by **Jason Hicks**, Education Technology Specialist, SOAR Charter Academy.
 _This board handles only staff-facing scheduling and recognition data. See
 **Privacy & Student-Data Protection** above for how student information is kept
 out of the pipeline entirely._
+

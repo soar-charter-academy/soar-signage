@@ -1,36 +1,244 @@
-cat << 'EOF'
 {
-  "generated_at": "2026-06-16T09:00:00",
-  "week_of": "2026-06-15",
-  "theme_override": "summer-break",
-  "events": [],
-  "yard_duty": { "week_label": "", "assignments": [] },
+  "generated_at": "2026-07-30T07:17:33",
+  "week_of": "2026-07-27",
+  "theme_override": "back-to-school",
+  "events": [
+    {
+      "title": "Meet at MU Room Doors",
+      "date": "2026-07-30",
+      "day": "Thursday",
+      "start": "08:00",
+      "end": null,
+      "location": "MU Room",
+      "category": "meeting",
+      "audience": "Everyone"
+    },
+    {
+      "title": "Welcome Back Breakfast",
+      "date": "2026-07-30",
+      "day": "Thursday",
+      "start": "08:15",
+      "end": "08:45",
+      "location": "MU Room",
+      "category": "food",
+      "audience": "Everyone"
+    },
+    {
+      "title": "BOY Centers Rotations",
+      "date": "2026-07-30",
+      "day": "Thursday",
+      "start": "08:45",
+      "end": "11:30",
+      "location": "MU Room",
+      "category": "meeting",
+      "audience": "Everyone"
+    },
+    {
+      "title": "TK and Kinder Orientations",
+      "date": "2026-07-30",
+      "day": "Thursday",
+      "start": "15:00",
+      "end": "16:00",
+      "location": "MU Room",
+      "category": "general",
+      "audience": "TK and Kinder Families"
+    },
+    {
+      "title": "New Family Orientation",
+      "date": "2026-07-30",
+      "day": "Thursday",
+      "start": "16:00",
+      "end": "17:00",
+      "location": "MU Room",
+      "category": "general",
+      "audience": "New Families"
+    },
+    {
+      "title": "1st–8th Grade Orientation Session 1",
+      "date": "2026-07-30",
+      "day": "Thursday",
+      "start": "17:15",
+      "end": "18:00",
+      "location": "MU Room",
+      "category": "general",
+      "audience": "Grades 1–8 Families"
+    },
+    {
+      "title": "1st–8th Grade Orientation Session 2",
+      "date": "2026-07-30",
+      "day": "Thursday",
+      "start": "18:00",
+      "end": "18:45",
+      "location": "MU Room",
+      "category": "general",
+      "audience": "Grades 1–8 Families"
+    },
+    {
+      "title": "Morning Business Meeting",
+      "date": "2026-07-31",
+      "day": "Friday",
+      "start": "08:00",
+      "end": "08:15",
+      "location": null,
+      "category": "meeting",
+      "audience": "Everyone"
+    },
+    {
+      "title": "Teacher Believed in Me Training",
+      "date": "2026-07-31",
+      "day": "Friday",
+      "start": "08:15",
+      "end": "12:30",
+      "location": "MU Room",
+      "category": "meeting",
+      "audience": "Selected Staff"
+    },
+    {
+      "title": "Work Time (Non-Training Staff)",
+      "date": "2026-07-31",
+      "day": "Friday",
+      "start": "08:15",
+      "end": "12:30",
+      "location": null,
+      "category": "general",
+      "audience": "All Other Staff"
+    },
+    {
+      "title": "All New Staff Meeting",
+      "date": "2026-07-31",
+      "day": "Friday",
+      "start": "13:00",
+      "end": "14:00",
+      "location": null,
+      "category": "meeting",
+      "audience": "New Staff"
+    },
+    {
+      "title": "Morning Business Meeting",
+      "date": "2026-08-03",
+      "day": "Monday",
+      "start": "08:00",
+      "end": "08:20",
+      "location": null,
+      "category": "meeting",
+      "audience": "Everyone"
+    },
+    {
+      "title": "Reveal Math Training Grades 6–8",
+      "date": "2026-08-03",
+      "day": "Monday",
+      "start": "08:30",
+      "end": "11:30",
+      "location": null,
+      "category": "meeting",
+      "audience": "Grades 6–8 Staff"
+    },
+    {
+      "title": "Lunch Provided by SOAR",
+      "date": "2026-08-03",
+      "day": "Monday",
+      "start": "11:30",
+      "end": "12:30",
+      "location": null,
+      "category": "food",
+      "audience": "Everyone"
+    },
+    {
+      "title": "Reveal Math Training Grades TK–5",
+      "date": "2026-08-03",
+      "day": "Monday",
+      "start": "12:30",
+      "end": "15:30",
+      "location": null,
+      "category": "meeting",
+      "audience": "Grades TK–5 Staff"
+    },
+    {
+      "title": "Morning Business Meeting",
+      "date": "2026-08-04",
+      "day": "Tuesday",
+      "start": "08:00",
+      "end": "08:20",
+      "location": null,
+      "category": "meeting",
+      "audience": "Everyone"
+    },
+    {
+      "title": "Leader in Me Session",
+      "date": "2026-08-04",
+      "day": "Tuesday",
+      "start": "08:20",
+      "end": "09:30",
+      "location": null,
+      "category": "meeting",
+      "audience": "Everyone"
+    },
+    {
+      "title": "ASP Staff Meeting",
+      "date": "2026-08-04",
+      "day": "Tuesday",
+      "start": "10:00",
+      "end": "11:00",
+      "location": null,
+      "category": "meeting",
+      "audience": "All ASP Staff"
+    },
+    {
+      "title": "Attendance Recovery/Tutoring Meeting",
+      "date": "2026-08-04",
+      "day": "Tuesday",
+      "start": "10:00",
+      "end": "11:00",
+      "location": null,
+      "category": "meeting",
+      "audience": "Relevant Staff"
+    },
+    {
+      "title": "Intervention Team Meeting",
+      "date": "2026-08-04",
+      "day": "Tuesday",
+      "start": "12:00",
+      "end": "13:00",
+      "location": "B5",
+      "category": "meeting",
+      "audience": "Intervention Team"
+    },
+    {
+      "title": "Lighthouse Action Team Meeting",
+      "date": "2026-08-04",
+      "day": "Tuesday",
+      "start": "13:00",
+      "end": "14:00",
+      "location": null,
+      "category": "meeting",
+      "audience": "Lighthouse Action Team"
+    }
+  ],
+  "yard_duty": {
+    "week_label": "",
+    "assignments": []
+  },
   "announcements": [
-    { "text": "Have a wonderful summer, SOAR staff — see you in August! \u2600", "priority": "high" }
+    {
+      "text": "Welcome back — SOAR PD Days begin July 30."
+    },
+    {
+      "text": "Lunch is on your own July 30 and July 31."
+    },
+    {
+      "text": "Jersey Mike's lunch provided by SOAR on August 3."
+    },
+    {
+      "text": "Work time available July 31 from 12:30–3:00."
+    }
   ],
   "diagnostics": {
-    "sanitize": "summer mode — no bulletin processed",
+    "sanitize": "no student-data sections detected (nothing removed)",
     "bulletin_warning": null,
     "yard_duty_warning": null,
-    "synced_by": "manual-summer-restore"
-  }
-}
-EOF
-Output
-
-{
-  "generated_at": "2026-06-16T09:00:00",
-  "week_of": "2026-06-15",
-  "theme_override": "summer-break",
-  "events": [],
-  "yard_duty": { "week_label": "", "assignments": [] },
-  "announcements": [
-    { "text": "Have a wonderful summer, SOAR staff — see you in August! \u2600", "priority": "high" }
-  ],
-  "diagnostics": {
-    "sanitize": "summer mode — no bulletin processed",
-    "bulletin_warning": null,
-    "yard_duty_warning": null,
-    "synced_by": "manual-summer-restore"
+    "synced_by": "agenda_to_board",
+    "source": {
+      "file_name": "agenda email (agenda.txt)"
+    }
   }
 }
